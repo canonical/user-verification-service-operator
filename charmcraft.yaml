@@ -81,7 +81,6 @@ provides:
     description: |
       Forwards the built-in grafana dashboard(s) for monitoring hydra.
 
-
 containers:
   user-verification-service:
     resource: oci-image
