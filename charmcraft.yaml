@@ -1,0 +1,41 @@
+# This file configures Charmcraft.
+# See https://juju.is/docs/sdk/charmcraft-config for guidance.
+
+name: user-verification-service
+type: charm
+title: User Verification Service Operator
+summary: Operator for Identity platform User Verification Service
+description: |
+    Operator for Identity platform User Verification Service
+links:
+  source: https://github.com/canonical/user-verification-service-operator
+  issues: https://github.com/canonical/user-verification-service-operator/issues
+
+base: ubuntu@22.04
+platforms:
+  amd64:
+
+config:
+  options:
+    log-level:
+      description: |
+        Configures the log level.
+
+        Acceptable values are: "info", "debug", "warning", "error" and "critical"
+      default: "info"
+      type: string
+
+containers:
+  user-verification-service:
+    resource: oci-image
+
+resources:
+  oci-image:
+    type: oci-image
+    description: OCI image for user-verification-service
+    upstream-source: ghcr.io/canonical/user-verification-service:main
+
+parts:
+  charm:
+    charm-binary-python-packages:
+      - "pydantic>=2"
