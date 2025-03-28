@@ -12,7 +12,7 @@ PORT = 8080
 # Integration constants
 INGRESS_INTEGRATION_NAME = "ingress"
 KRATOS_INTEGRATION_NAME = "kratos"
-LOGIN_UI_INTEGRATION_NAME = "login-ui"
+LOGIN_UI_INTEGRATION_NAME = "ui-endpoint-info"
 PROMETHEUS_SCRAPE_INTEGRATION_NAME = "metrics-endpoint"
 LOGGING_RELATION_NAME = "logging"
 GRAFANA_DASHBOARD_INTEGRATION_NAME = "grafana-dashboard"

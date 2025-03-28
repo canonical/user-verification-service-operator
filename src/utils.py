@@ -7,6 +7,8 @@ from typing import Any, Callable, Optional, TypeVar
 
 from ops.charm import CharmBase
 
+from constants import LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
+
 logger = logging.getLogger(__name__)
 
 CharmEventHandler = TypeVar("CharmEventHandler", bound=Callable[..., Any])
@@ -35,8 +37,15 @@ def integration_existence(integration_name: str) -> Condition:
     return wrapped
 
 
+def container_connectivity(charm: CharmBase) -> bool:
+    return charm.unit.get_container(WORKLOAD_CONTAINER).can_connect()
+
+
+login_ui_integration_exists = integration_existence(LOGIN_UI_INTEGRATION_NAME)
+
+
 # Condition failure causes early return without doing anything
-NOOP_CONDITIONS: tuple[Condition, ...] = ()
+NOOP_CONDITIONS: tuple[Condition, ...] = (container_connectivity,)
 
 
 # Condition failure causes early return with corresponding event deferred
