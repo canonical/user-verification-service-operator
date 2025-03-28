@@ -1,9 +1,13 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+from typing import Any, Mapping, TypeAlias
+
 from ops.model import ConfigData
 
 from env_vars import EnvVars
+
+ServiceConfigs: TypeAlias = Mapping[str, Any]
 
 
 class CharmConfig:
