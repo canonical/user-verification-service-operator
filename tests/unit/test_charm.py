@@ -1,21 +1,44 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
-#
-# Learn more about testing at: https://juju.is/docs/sdk/testing
+
+from unittest.mock import MagicMock
 
 from ops import testing
 
 from charm import UserVerificationServiceOperatorCharm
 
 
-def test_pebble_ready():
-    # Arrange:
-    ctx = testing.Context(UserVerificationServiceOperatorCharm)
-    container = testing.Container("user-verification-service", can_connect=True)
-    state_in = testing.State(containers={container})
+class TestPebbleReadyEvent:
+    def test_when_event_emitted(
+        self,
+        mocked_open_port: MagicMock,
+        mocked_charm_holistic_handler: MagicMock,
+        mocked_workload_service_version: MagicMock,
+    ) -> None:
+        ctx = testing.Context(UserVerificationServiceOperatorCharm)
+        container = testing.Container("user-verification-service", can_connect=True)
+        state_in = testing.State(containers={container})
 
-    # Act:
-    state_out = ctx.run(ctx.on.pebble_ready(container), state_in)
+        state_out = ctx.run(ctx.on.pebble_ready(container), state_in)
 
-    # Assert:
-    assert state_out.unit_status == testing.ActiveStatus()
+        assert state_out.unit_status == testing.ActiveStatus()
+        mocked_open_port.assert_called_once()
+        mocked_charm_holistic_handler.assert_called_once()
+        assert state_out.workload_version == mocked_workload_service_version.return_value
+
+
+class TestConfigChangedEvent:
+    def test_when_event_emitted(
+        self,
+        mocked_open_port: MagicMock,
+        mocked_charm_holistic_handler: MagicMock,
+        mocked_workload_service_version: MagicMock,
+    ) -> None:
+        ctx = testing.Context(UserVerificationServiceOperatorCharm)
+        container = testing.Container("user-verification-service", can_connect=True)
+        state_in = testing.State(containers={container})
+
+        state_out = ctx.run(ctx.on.config_changed(), state_in)
+
+        assert state_out.unit_status == testing.ActiveStatus()
+        mocked_charm_holistic_handler.assert_called_once()
