@@ -7,7 +7,7 @@ from typing import Any, Callable, Optional, TypeVar
 
 from ops.charm import CharmBase
 
-from constants import LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
+from constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ def container_connectivity(charm: CharmBase) -> bool:
 
 
 login_ui_integration_exists = integration_existence(LOGIN_UI_INTEGRATION_NAME)
+ingress_integration_exists = integration_existence(INGRESS_INTEGRATION_NAME)
 
 
 # Condition failure causes early return without doing anything

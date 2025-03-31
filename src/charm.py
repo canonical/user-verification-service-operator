@@ -10,16 +10,18 @@ import ops
 from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
     LoginUIEndpointsRequirer,
 )
+from charms.traefik_route_k8s.v0.traefik_route import TraefikRouteRequirer
 
 from configs import CharmConfig
-from constants import LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
+from constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
 from exceptions import PebbleError
-from integrations import LoginUIEndpointData
+from integrations import IngressData, LoginUIEndpointData
 from services import PebbleService, WorkloadService
 from utils import (
     EVENT_DEFER_CONDITIONS,
     NOOP_CONDITIONS,
     container_connectivity,
+    leader_unit,
     login_ui_integration_exists,
 )
 
@@ -39,6 +41,12 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
             self, relation_name=LOGIN_UI_INTEGRATION_NAME
         )
 
+        self.ingress = TraefikRouteRequirer(
+            self,
+            self.model.get_relation(INGRESS_INTEGRATION_NAME),
+            INGRESS_INTEGRATION_NAME,
+        )
+
         framework.observe(self.on.user_verification_service_pebble_ready, self._on_pebble_ready)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_status)
@@ -52,6 +60,34 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         self.framework.observe(
             self.on[LOGIN_UI_INTEGRATION_NAME].relation_broken, self._on_login_ui_changed
         )
+
+        # internal ingress
+        self.framework.observe(
+            self.on[INGRESS_INTEGRATION_NAME].relation_joined,
+            self._on_internal_ingress_changed,
+        )
+        self.framework.observe(
+            self.on[INGRESS_INTEGRATION_NAME].relation_changed,
+            self._on_internal_ingress_changed,
+        )
+        self.framework.observe(
+            self.on[INGRESS_INTEGRATION_NAME].relation_broken,
+            self._on_internal_ingress_changed,
+        )
+
+    @property
+    def _pebble_layer(self) -> ops.pebble.Layer:
+        charm_config = CharmConfig(self.config)
+        return self._pebble_service.render_pebble_layer(
+            LoginUIEndpointData.load(self.login_ui_requirer),
+            charm_config,
+        )
+
+    @leader_unit
+    def _on_internal_ingress_changed(self, event: ops.RelationEvent) -> None:
+        if self.ingress.is_ready():
+            ingress_config = IngressData.load(self.ingress).config
+            self.ingress.submit_to_traefik(ingress_config)
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent):
         self._holistic_handler(event)
@@ -80,14 +116,6 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
                 f"Failed to plan pebble layer, please check the {WORKLOAD_CONTAINER} container logs"
             )
             raise
-
-    @property
-    def _pebble_layer(self) -> ops.pebble.Layer:
-        charm_config = CharmConfig(self.config)
-        return self._pebble_service.render_pebble_layer(
-            LoginUIEndpointData.load(self.login_ui_requirer),
-            charm_config,
-        )
 
     def _on_collect_status(self, event: ops.CollectStatusEvent) -> None:
         if not container_connectivity(self):
