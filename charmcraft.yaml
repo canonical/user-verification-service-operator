@@ -51,3 +51,6 @@ parts:
   charm:
     charm-binary-python-packages:
       - "pydantic>=2"
+    build-packages:
+      - rustc
+      - cargo
