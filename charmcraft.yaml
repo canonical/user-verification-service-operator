@@ -25,6 +25,12 @@ config:
       default: "info"
       type: string
 
+requires:
+  ui-endpoint-info:
+    interface: login_ui_endpoints
+    limit: 1
+    optional: True
+
 containers:
   user-verification-service:
     resource: oci-image

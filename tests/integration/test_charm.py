@@ -2,7 +2,6 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import asyncio
 import logging
 from pathlib import Path
 
@@ -15,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./charmcraft.yaml").read_text())
 APP_NAME = METADATA["name"]
+LOGIN_UI_CHARM = "identity-platform-login-ui-operator"
+LOGIN_UI_APP = "login-ui"
 
 
 async def get_unit_address(ops_test: OpsTest, app_name: str, unit_num: int) -> str:
@@ -33,12 +34,17 @@ async def test_build_and_deploy(ops_test: OpsTest):
     charm = await ops_test.build_charm(".")
     resources = {"oci-image": METADATA["resources"]["oci-image"]["upstream-source"]}
 
-    # Deploy the charm and wait for active/idle status
-    await asyncio.gather(
-        ops_test.model.deploy(charm, resources=resources, application_name=APP_NAME),
-        ops_test.model.wait_for_idle(
-            apps=[APP_NAME], status="active", raise_on_blocked=True, timeout=1000
-        ),
+    await ops_test.model.deploy(charm, resources=resources, application_name=APP_NAME)
+    await ops_test.model.deploy(
+        LOGIN_UI_CHARM,
+        application_name=LOGIN_UI_APP,
+        channel="latest/stable",
+        trust=True,
+        )
+    await ops_test.model.integrate(APP_NAME, LOGIN_UI_APP)
+
+    await ops_test.model.wait_for_idle(
+        apps=[APP_NAME, LOGIN_UI_APP], status="active", timeout=1000,
     )
 
 
