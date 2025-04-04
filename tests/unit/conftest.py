@@ -44,6 +44,24 @@ def mocked_event() -> MagicMock:
 
 
 @pytest.fixture
+def ingress_integration_data() -> dict:
+    return {
+        "external_host": "some-host",
+        "scheme": "http",
+    }
+
+
+@pytest.fixture
+def ingress_integration(ingress_integration_data: dict) -> testing.Relation:
+    return testing.Relation(
+        endpoint="ingress",
+        interface="traefik_route",
+        remote_app_name="traefik",
+        remote_app_data=ingress_integration_data,
+    )
+
+
+@pytest.fixture
 def login_ui_integration_data() -> dict:
     return {
         "consent_url": "http://login-ui.org/ui/consent",

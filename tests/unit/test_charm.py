@@ -46,6 +46,40 @@ class TestConfigChangedEvent:
         mocked_charm_holistic_handler.assert_called_once()
 
 
+class TestPublicIngressReadyEvent:
+    def test_when_event_emitted(
+        self,
+        ingress_integration: testing.Relation,
+        login_ui_integration: testing.Relation,
+    ) -> None:
+        ctx = testing.Context(UserVerificationServiceOperatorCharm)
+        container = testing.Container("user-verification-service", can_connect=True)
+        state_in = testing.State(
+            containers={container}, relations=[ingress_integration, login_ui_integration]
+        )
+
+        state_out = ctx.run(ctx.on.relation_joined(ingress_integration), state_in)
+
+        assert state_out.unit_status == testing.ActiveStatus()
+
+
+class TestPublicIngressRevokedEvent:
+    def test_when_event_emitted(
+        self,
+        ingress_integration: testing.Relation,
+        login_ui_integration: testing.Relation,
+    ) -> None:
+        ctx = testing.Context(UserVerificationServiceOperatorCharm)
+        container = testing.Container("user-verification-service", can_connect=True)
+        state_in = testing.State(
+            containers={container}, relations=[ingress_integration, login_ui_integration]
+        )
+
+        state_out = ctx.run(ctx.on.relation_broken(ingress_integration), state_in)
+
+        assert state_out.unit_status == testing.ActiveStatus()
+
+
 class TestHolisticHandler:
     def test_when_container_not_connected(
         self,

@@ -30,6 +30,12 @@ requires:
     interface: login_ui_endpoints
     limit: 1
     optional: True
+  ingress:
+    interface: traefik_route
+    limit: 1
+    optional: False
+    description: Ingress used to expose the service to the public internet
+
 
 containers:
   user-verification-service:
@@ -45,3 +51,6 @@ parts:
   charm:
     charm-binary-python-packages:
       - "pydantic>=2"
+    build-packages:
+      - rustc
+      - cargo
