@@ -36,6 +36,16 @@ requires:
     optional: False
     description: Ingress used to expose the service to the public internet
 
+provides:
+  kratos-registration-webhook:
+    interface: kratos_registration_webhook
+    optional: true
+    description: Used to configure the kratos webhook that will call this service
+  registration-endpoint-info:
+    interface: login_ui_endpoints
+    limit: 1
+    optional: True
+
 
 containers:
   user-verification-service:
