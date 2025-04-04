@@ -8,14 +8,29 @@ import logging
 
 import ops
 from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
+    LoginUIEndpointsProvider,
     LoginUIEndpointsRequirer,
 )
-from charms.traefik_route_k8s.v0.traefik_route import TraefikRouteRequirer
+from charms.kratos.v0.kratos_registration_web_hook import (
+    KratosRegistrationWebhookProvider,
+)
+from charms.traefik_k8s.v0.traefik_route import TraefikRouteRequirer
 
 from configs import CharmConfig
-from constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
+from constants import (
+    INGRESS_INTEGRATION_NAME,
+    LOGIN_UI_INTEGRATION_NAME,
+    PORT,
+    REGISTRATION_UI_INTEGRATION_NAME,
+    WORKLOAD_CONTAINER,
+)
 from exceptions import PebbleError
-from integrations import IngressData, LoginUIEndpointData
+from integrations import (
+    IngressData,
+    KratosRegistrationWebhookIntegration,
+    LoginUIEndpointData,
+    UIEndpointIntegration,
+)
 from services import PebbleService, WorkloadService
 from utils import (
     EVENT_DEFER_CONDITIONS,
@@ -40,11 +55,23 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         self.login_ui_requirer = LoginUIEndpointsRequirer(
             self, relation_name=LOGIN_UI_INTEGRATION_NAME
         )
+        self.registration_endpoints_provider = LoginUIEndpointsProvider(
+            self, relation_name=REGISTRATION_UI_INTEGRATION_NAME
+        )
+        self.registration_endpoints_integration = UIEndpointIntegration(
+            self.registration_endpoints_provider
+        )
+
+        self.kratos_registration_webhook = KratosRegistrationWebhookProvider(self)
+        self.kratos_webhook_integration = KratosRegistrationWebhookIntegration(
+            self.kratos_registration_webhook
+        )
 
         self.ingress = TraefikRouteRequirer(
             self,
             self.model.get_relation(INGRESS_INTEGRATION_NAME),
             INGRESS_INTEGRATION_NAME,
+            raw=True,
         )
 
         framework.observe(self.on.user_verification_service_pebble_ready, self._on_pebble_ready)
@@ -61,17 +88,15 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
             self.on[LOGIN_UI_INTEGRATION_NAME].relation_broken, self._on_login_ui_changed
         )
 
+        self.framework.observe(self.registration_endpoints_provider.on.ready, self._on_ui_ready)
+
+        self.framework.observe(
+            self.kratos_registration_webhook.on.ready, self._on_kratos_webhook_ready
+        )
+
         # internal ingress
         self.framework.observe(
-            self.on[INGRESS_INTEGRATION_NAME].relation_joined,
-            self._on_internal_ingress_changed,
-        )
-        self.framework.observe(
-            self.on[INGRESS_INTEGRATION_NAME].relation_changed,
-            self._on_internal_ingress_changed,
-        )
-        self.framework.observe(
-            self.on[INGRESS_INTEGRATION_NAME].relation_broken,
+            self.ingress.on.ready,
             self._on_internal_ingress_changed,
         )
 
@@ -83,11 +108,20 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
             charm_config,
         )
 
+    @property
+    def _webhook_url(self) -> str:
+        return f"http://{self.app.name}.{self.model.name}.svc.cluster.local:{PORT}/api/v0/verify"
+
+    @property
+    def _registration_url(self) -> str:
+        return f"{IngressData.load(self.ingress).endpoint}/ui/registration_error"
+
     @leader_unit
     def _on_internal_ingress_changed(self, event: ops.RelationEvent) -> None:
         if self.ingress.is_ready():
             ingress_config = IngressData.load(self.ingress).config
             self.ingress.submit_to_traefik(ingress_config)
+        self._holistic_handler(event)
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent):
         self._holistic_handler(event)
@@ -101,6 +135,12 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
         self._workload_service.set_version()
 
+    def _on_kratos_webhook_ready(self, event: ops.RelationEvent) -> None:
+        self._holistic_handler(event)
+
+    def _on_ui_ready(self, event: ops.RelationEvent) -> None:
+        self._holistic_handler(event)
+
     def _holistic_handler(self, event: ops.EventBase) -> None:
         if not all(condition(self) for condition in NOOP_CONDITIONS):
             return
@@ -108,6 +148,12 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         if not all(condition(self) for condition in EVENT_DEFER_CONDITIONS):
             event.defer()
             return
+
+        if self.kratos_webhook_integration.is_ready():
+            self.kratos_webhook_integration.update_relation_data(self._webhook_url)
+
+        if self.registration_endpoints_integration.is_ready():
+            self.registration_endpoints_integration.update_relation_data(self._registration_url)
 
         try:
             self._pebble_service.plan(self._pebble_layer)
