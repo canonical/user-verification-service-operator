@@ -6,6 +6,7 @@ import json
 import logging
 from dataclasses import dataclass, field, fields
 from typing import Any, Type, TypeAlias, Union
+from urllib.parse import urlparse
 
 from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
     LoginUIEndpointsProvider,
@@ -17,12 +18,14 @@ from charms.kratos.v0.kratos_registration_web_hook import (
     ProviderData,
     ResponseConfig,
 )
+from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 from charms.traefik_k8s.v0.traefik_route import TraefikRouteRequirer
 from jinja2 import Template
 from pydantic import AnyHttpUrl
 
 from configs import ServiceConfigs
 from constants import PORT, REGISTRATION_UI_INTEGRATION_NAME, REGISTRATION_WEBHOOK_INTEGRATION_NAME
+from env_vars import EnvVars
 
 logger = logging.getLogger(__name__)
 
@@ -131,4 +134,36 @@ class KratosRegistrationWebhookIntegration:
                     parse=True,
                 ),
             )
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class TracingData:
+    """The data source from the tracing integration."""
+
+    is_ready: bool = False
+    http_endpoint: str = ""
+
+    def to_env_vars(self) -> EnvVars:
+        if not self.is_ready:
+            return {}
+
+        return {
+            "TRACING_ENABLED": True,
+            "TRACING_PROVIDER": "otel",
+            "TRACING_PROVIDERS_OTLP_SERVER_URL": self.http_endpoint,
+            "TRACING_PROVIDERS_OTLP_INSECURE": "true",
+            "TRACING_PROVIDERS_OTLP_SAMPLING_SAMPLING_RATIO": "1.0",
+        }
+
+    @classmethod
+    def load(cls, requirer: TracingEndpointRequirer) -> "TracingData":
+        if not (is_ready := requirer.is_ready()):
+            return cls()
+
+        http_endpoint = urlparse(requirer.get_endpoint("otlp_http"))
+
+        return cls(
+            is_ready=is_ready,
+            http_endpoint=http_endpoint.geturl().replace(f"{http_endpoint.scheme}://", "", 1),  # type: ignore[arg-type]
         )

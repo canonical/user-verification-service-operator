@@ -7,6 +7,7 @@
 import logging
 
 import ops
+from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
     LoginUIEndpointsProvider,
     LoginUIEndpointsRequirer,
@@ -14,14 +15,21 @@ from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
 from charms.kratos.v0.kratos_registration_web_hook import (
     KratosRegistrationWebhookProvider,
 )
+from charms.loki_k8s.v1.loki_push_api import LogForwarder
+from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
+from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 from charms.traefik_k8s.v0.traefik_route import TraefikRouteRequirer
 
 from configs import CharmConfig
 from constants import (
+    GRAFANA_DASHBOARD_INTEGRATION_NAME,
     INGRESS_INTEGRATION_NAME,
+    LOGGING_RELATION_NAME,
     LOGIN_UI_INTEGRATION_NAME,
     PORT,
+    PROMETHEUS_SCRAPE_INTEGRATION_NAME,
     REGISTRATION_UI_INTEGRATION_NAME,
+    TEMPO_TRACING_INTEGRATION_NAME,
     WORKLOAD_CONTAINER,
 )
 from exceptions import PebbleError
@@ -29,6 +37,7 @@ from integrations import (
     IngressData,
     KratosRegistrationWebhookIntegration,
     LoginUIEndpointData,
+    TracingData,
     UIEndpointIntegration,
 )
 from services import PebbleService, WorkloadService
@@ -74,6 +83,34 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
             raw=True,
         )
 
+        self.metrics_endpoint = MetricsEndpointProvider(
+            self,
+            relation_name=PROMETHEUS_SCRAPE_INTEGRATION_NAME,
+            jobs=[
+                {
+                    "job_name": "user_verification_service_metrics",
+                    "metrics_path": "/api/v0/metrics",
+                    "static_configs": [
+                        {
+                            "targets": [f"*:{PORT}"],
+                        }
+                    ],
+                }
+            ],
+        )
+
+        # Loki logging relation
+        self._log_forwarder = LogForwarder(self, relation_name=LOGGING_RELATION_NAME)
+
+        self._grafana_dashboards = GrafanaDashboardProvider(
+            self,
+            relation_name=GRAFANA_DASHBOARD_INTEGRATION_NAME,
+        )
+
+        self.tracing_requirer = TracingEndpointRequirer(
+            self, relation_name=TEMPO_TRACING_INTEGRATION_NAME, protocols=["otlp_http"]
+        )
+
         framework.observe(self.on.user_verification_service_pebble_ready, self._on_pebble_ready)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_status)
@@ -105,6 +142,7 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         charm_config = CharmConfig(self.config)
         return self._pebble_service.render_pebble_layer(
             LoginUIEndpointData.load(self.login_ui_requirer),
+            TracingData.load(self.tracing_requirer),
             charm_config,
         )
 

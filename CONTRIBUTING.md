@@ -62,6 +62,6 @@ juju deploy ./user-verification-service*.charm --resource oci-image=$(yq eval '.
 
 ## Canonical Contributor Agreement
 
-Canonical welcomes contributions to Charmed Ory Hydra. Please check out
+Canonical welcomes contributions to the User Verification Service. Please check out
 our [contributor agreement](https://ubuntu.com/legal/contributors) if you're
 interested in contributing to the solution.
