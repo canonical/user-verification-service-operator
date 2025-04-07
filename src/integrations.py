@@ -1,24 +1,35 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import base64
 import json
 import logging
 from dataclasses import dataclass, field, fields
 from typing import Any, Type, TypeAlias, Union
 
 from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
+    LoginUIEndpointsProvider,
     LoginUIEndpointsRequirer,
+    LoginUIProviderData,
 )
-from charms.traefik_route_k8s.v0.traefik_route import TraefikRouteRequirer
+from charms.kratos.v0.kratos_registration_web_hook import (
+    KratosRegistrationWebhookProvider,
+    ProviderData,
+    ResponseConfig,
+)
+from charms.traefik_k8s.v0.traefik_route import TraefikRouteRequirer
 from jinja2 import Template
 from pydantic import AnyHttpUrl
 
 from configs import ServiceConfigs
-from constants import PORT
+from constants import PORT, REGISTRATION_UI_INTEGRATION_NAME, REGISTRATION_WEBHOOK_INTEGRATION_NAME
 
 logger = logging.getLogger(__name__)
 
 JsonSerializable: TypeAlias = Union[dict[str, Any], list[Any], int, str, float, bool, Type[None]]
+WebhookBody = base64.b64encode(b"""function(ctx) {
+  email: ctx.identity.traits.email
+}""").decode()
 
 
 def dataclass_from_dict(cls, **kwargs):
@@ -43,7 +54,24 @@ class LoginUIEndpointData:
             logger.error("Failed to fetch the login ui endpoints: %s", exc)
             return cls()
 
+        if not login_ui_endpoints:
+            return cls()
+
         return dataclass_from_dict(cls, **login_ui_endpoints)
+
+
+class UIEndpointIntegration:
+    def __init__(self, requirer: LoginUIEndpointsProvider) -> None:
+        self._requirer = requirer
+
+    def is_ready(self) -> bool:
+        rel = self._requirer._charm.model.get_relation(REGISTRATION_UI_INTEGRATION_NAME)
+        return rel and rel.active
+
+    def update_relation_data(self, ingress_url: str):
+        self._requirer.send_endpoints_relation_data(
+            LoginUIProviderData(registration_url=ingress_url)
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,4 +108,27 @@ class IngressData:
         return cls(
             endpoint=endpoint,
             config=ingress_config,
+        )
+
+
+class KratosRegistrationWebhookIntegration:
+    def __init__(self, requirer: KratosRegistrationWebhookProvider) -> None:
+        self._requirer = requirer
+
+    def is_ready(self) -> bool:
+        rel = self._requirer._charm.model.get_relation(REGISTRATION_WEBHOOK_INTEGRATION_NAME)
+        return rel and rel.active
+
+    def update_relation_data(self, webhook_url: str):
+        self._requirer.update_relations_app_data(
+            ProviderData(
+                url=webhook_url,
+                body=f"base64://{WebhookBody}",
+                method="POST",
+                emit_analytics_event=False,
+                response=ResponseConfig(
+                    ignore=False,
+                    parse=True,
+                ),
+            )
         )
