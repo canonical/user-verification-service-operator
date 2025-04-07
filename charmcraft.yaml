@@ -35,6 +35,15 @@ requires:
     limit: 1
     optional: False
     description: Ingress used to expose the service to the public internet
+  logging:
+    interface: loki_push_api
+    optional: true
+  tracing:
+    interface: tracing
+    limit: 1
+    optional: true
+    description: |
+      Provides traces to COS Tempo instance
 
 provides:
   kratos-registration-webhook:
@@ -45,6 +54,16 @@ provides:
     interface: login_ui_endpoints
     limit: 1
     optional: True
+  metrics-endpoint:
+    interface: prometheus_scrape
+    optional: True
+    description: |
+      Provides application metrics to COS Prometheus instance
+  grafana-dashboard:
+    interface: grafana_dashboard
+    optional: True
+    description: |
+      Forwards the built-in grafana dashboard(s) for monitoring hydra.
 
 
 containers:
