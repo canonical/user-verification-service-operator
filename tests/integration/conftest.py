@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import AsyncGenerator, Callable, Optional
 
 import httpx
+import pytest
 import pytest_asyncio
 import yaml
 from pytest_operator.plugin import OpsTest
@@ -86,3 +87,8 @@ async def local_charm(ops_test: OpsTest) -> Path:
 async def http_client() -> AsyncGenerator[httpx.AsyncClient, None]:
     async with httpx.AsyncClient(verify=False) as client:
         yield client
+
+
+@pytest.fixture
+def support_email() -> str:
+    return "support@email.com"

@@ -5,6 +5,7 @@
 import http
 import logging
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import httpx
 import pytest
@@ -30,14 +31,19 @@ async def get_unit_address(ops_test: OpsTest, app_name: str, unit_num: int) -> s
 
 
 @pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest, local_charm: Path):
+async def test_build_and_deploy(ops_test: OpsTest, local_charm: Path, support_email: str) -> None:
     """Build the charm-under-test and deploy it together with related charms.
 
     Assert on the unit status before any relations/configurations take place.
     """
     # Build and deploy charm from local source folder
     resources = {"oci-image": METADATA["resources"]["oci-image"]["upstream-source"]}
-    await ops_test.model.deploy(local_charm, resources=resources, application_name=APP_NAME)
+    await ops_test.model.deploy(
+        local_charm,
+        resources=resources,
+        application_name=APP_NAME,
+        config={"support_email": support_email},
+    )
     await ops_test.model.deploy(
         TRAEFIK_CHARM,
         application_name=TRAEFIK_APP,
@@ -62,7 +68,7 @@ async def test_build_and_deploy(ops_test: OpsTest, local_charm: Path):
     )
 
 
-async def test_app_health(ops_test: OpsTest, http_client: httpx.AsyncClient):
+async def test_app_health(ops_test: OpsTest, http_client: httpx.AsyncClient) -> None:
     public_address = await get_unit_address(ops_test, APP_NAME, 0)
 
     resp = await http_client.get(f"http://{public_address}:8080/api/v0/status")
@@ -71,7 +77,7 @@ async def test_app_health(ops_test: OpsTest, http_client: httpx.AsyncClient):
 
 
 async def test_public_ingress_integration(
-    ops_test: OpsTest, login_ui_endpoint_integration_data: dict, http_client: httpx.AsyncClient
+    ops_test: OpsTest, http_client: httpx.AsyncClient
 ) -> None:
     address = await get_unit_address(ops_test, TRAEFIK_APP, 0)
     url = f"http://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
@@ -79,6 +85,22 @@ async def test_public_ingress_integration(
     resp = await http_client.get(url, follow_redirects=False)
 
     assert resp.status_code == http.HTTPStatus.SEE_OTHER
+
+
+async def test_error_redirect(
+    ops_test: OpsTest,
+    login_ui_endpoint_integration_data: dict,
+    http_client: httpx.AsyncClient,
+    support_email: str,
+) -> None:
+    address = await get_unit_address(ops_test, TRAEFIK_APP, 0)
+    url = f"http://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
+
+    resp = await http_client.get(url, follow_redirects=False)
+
     assert resp.headers.get("location").startswith(
         login_ui_endpoint_integration_data["oidc_error_url"]
     )
+    loc = urlparse(resp.headers.get("location"))
+    q = parse_qs(loc.query)
+    assert f"Contact support at {support_email}" in q.get("error_description")[0]

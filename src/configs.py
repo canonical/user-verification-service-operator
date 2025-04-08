@@ -17,7 +17,7 @@ class CharmConfig:
         self._config = config
 
     def to_env_vars(self) -> EnvVars:
-        log_level = self._config["log_level"].upper()
         return {
-            "LOG_LEVEL": log_level,
+            "LOG_LEVEL": self._config["log_level"].upper(),
+            "SUPPORT_EMAIL": self._config.get("support_email", ""),
         }
