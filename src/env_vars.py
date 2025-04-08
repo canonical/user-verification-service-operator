@@ -13,9 +13,9 @@ DEFAULT_CONTAINER_ENV = {
     "TRACING_ENABLED": False,
     "LOG_LEVEL": "info",
     "PORT": str(PORT),
-    "ERROR_UI_URL": "http://place-holder",
-    "SUPPORT_EMAIL": "http://place-holder",
-    "DIRECTORY_API_URL": "http://place-holder",
+    "ERROR_UI_URL": "",
+    "SUPPORT_EMAIL": "",
+    "DIRECTORY_API_URL": "",
 }
 
 

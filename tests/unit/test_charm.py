@@ -98,10 +98,16 @@ class TestHolisticHandler:
     def test_when_all_conditions_satisfied(
         self,
         login_ui_integration: testing.Relation,
+        charm_config: dict,
+        support_email: str,
     ) -> None:
         ctx = testing.Context(UserVerificationServiceOperatorCharm)
         container = testing.Container("user-verification-service", can_connect=True)
-        state_in = testing.State(containers={container}, relations=[login_ui_integration])
+        state_in = testing.State(
+            containers={container},
+            relations=[login_ui_integration],
+            config=charm_config,
+        )
 
         # We abuse the config_changed event, to run the unit tests on holistic_handler.
         # Scenario does not provide us with a way to
@@ -118,8 +124,8 @@ class TestHolisticHandler:
             "LOG_LEVEL": "INFO",
             "PORT": "8080",
             "ERROR_UI_URL": login_ui_integration.remote_app_data["oidc_error_url"],
-            "SUPPORT_EMAIL": "http://place-holder",
-            "DIRECTORY_API_URL": "http://place-holder",
+            "SUPPORT_EMAIL": support_email,
+            "DIRECTORY_API_URL": "",
         }
 
 

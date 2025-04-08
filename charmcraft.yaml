@@ -24,6 +24,10 @@ config:
         Acceptable values are: "info", "debug", "warning", "error" and "critical"
       default: "info"
       type: string
+    support_email:
+      description: |
+        The email that the user will be instructed to contact in case of error
+      type: string
 
 requires:
   ui-endpoint-info:

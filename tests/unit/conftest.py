@@ -87,6 +87,18 @@ def login_ui_integration(login_ui_integration_data: dict) -> testing.Relation:
 
 
 @pytest.fixture
+def support_email() -> str:
+    return "support@email.com"
+
+
+@pytest.fixture
+def charm_config(support_email: str) -> dict:
+    return {
+        "support_email": support_email,
+    }
+
+
+@pytest.fixture
 def mocked_collect_status_event() -> MagicMock:
     return create_autospec(CollectStatusEvent)
 
