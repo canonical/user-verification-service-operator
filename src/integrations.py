@@ -137,7 +137,7 @@ class KratosRegistrationWebhookIntegration:
         )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class TracingData:
     """The data source from the tracing integration."""
 
@@ -145,25 +145,19 @@ class TracingData:
     http_endpoint: str = ""
 
     def to_env_vars(self) -> EnvVars:
-        if not self.is_ready:
-            return {}
-
         return {
-            "TRACING_ENABLED": True,
-            "TRACING_PROVIDER": "otel",
-            "TRACING_PROVIDERS_OTLP_SERVER_URL": self.http_endpoint,
-            "TRACING_PROVIDERS_OTLP_INSECURE": "true",
-            "TRACING_PROVIDERS_OTLP_SAMPLING_SAMPLING_RATIO": "1.0",
+            "TRACING_ENABLED": self.is_ready,
+            "OTEL_HTTP_ENDPOINT": self.http_endpoint,
         }
 
     @classmethod
     def load(cls, requirer: TracingEndpointRequirer) -> "TracingData":
         if not (is_ready := requirer.is_ready()):
-            return cls()
+            return TracingData()
 
         http_endpoint = urlparse(requirer.get_endpoint("otlp_http"))
 
-        return cls(
+        return TracingData(
             is_ready=is_ready,
             http_endpoint=http_endpoint.geturl().replace(f"{http_endpoint.scheme}://", "", 1),  # type: ignore[arg-type]
         )
