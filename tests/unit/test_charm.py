@@ -1,6 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+from typing import List
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,10 +18,11 @@ class TestPebbleReadyEvent:
         mocked_charm_holistic_handler: MagicMock,
         mocked_workload_service_version: MagicMock,
         login_ui_integration: testing.Relation,
+        mocked_secrets: List[testing.Secret],
     ) -> None:
         ctx = testing.Context(UserVerificationServiceOperatorCharm)
         container = testing.Container("user-verification-service", can_connect=True)
-        state_in = testing.State(containers={container}, relations=[login_ui_integration])
+        state_in = testing.State(containers={container}, relations=[login_ui_integration], secrets=mocked_secrets)
 
         state_out = ctx.run(ctx.on.pebble_ready(container), state_in)
 
@@ -35,10 +37,11 @@ class TestConfigChangedEvent:
         self,
         mocked_charm_holistic_handler: MagicMock,
         login_ui_integration: testing.Relation,
+        mocked_secrets: List[testing.Secret],
     ) -> None:
         ctx = testing.Context(UserVerificationServiceOperatorCharm)
         container = testing.Container("user-verification-service", can_connect=True)
-        state_in = testing.State(containers={container}, relations=[login_ui_integration])
+        state_in = testing.State(containers={container}, relations=[login_ui_integration], secrets=mocked_secrets)
 
         state_out = ctx.run(ctx.on.config_changed(), state_in)
 
@@ -51,11 +54,12 @@ class TestPublicIngressReadyEvent:
         self,
         ingress_integration: testing.Relation,
         login_ui_integration: testing.Relation,
+        mocked_secrets: List[testing.Secret],
     ) -> None:
         ctx = testing.Context(UserVerificationServiceOperatorCharm)
         container = testing.Container("user-verification-service", can_connect=True)
         state_in = testing.State(
-            containers={container}, relations=[ingress_integration, login_ui_integration]
+            containers={container}, relations=[ingress_integration, login_ui_integration], secrets=mocked_secrets
         )
 
         state_out = ctx.run(ctx.on.relation_joined(ingress_integration), state_in)
@@ -68,11 +72,12 @@ class TestPublicIngressRevokedEvent:
         self,
         ingress_integration: testing.Relation,
         login_ui_integration: testing.Relation,
+        mocked_secrets: List[testing.Secret],
     ) -> None:
         ctx = testing.Context(UserVerificationServiceOperatorCharm)
         container = testing.Container("user-verification-service", can_connect=True)
         state_in = testing.State(
-            containers={container}, relations=[ingress_integration, login_ui_integration]
+            containers={container}, relations=[ingress_integration, login_ui_integration], secrets=mocked_secrets
         )
 
         state_out = ctx.run(ctx.on.relation_broken(ingress_integration), state_in)
@@ -98,8 +103,10 @@ class TestHolisticHandler:
     def test_when_all_conditions_satisfied(
         self,
         login_ui_integration: testing.Relation,
+        mocked_secrets: List[testing.Secret],
         charm_config: dict,
         support_email: str,
+        api_token: str,
     ) -> None:
         ctx = testing.Context(UserVerificationServiceOperatorCharm)
         container = testing.Container("user-verification-service", can_connect=True)
@@ -107,6 +114,7 @@ class TestHolisticHandler:
             containers={container},
             relations=[login_ui_integration],
             config=charm_config,
+            secrets=mocked_secrets,
         )
 
         # We abuse the config_changed event, to run the unit tests on holistic_handler.
@@ -125,6 +133,7 @@ class TestHolisticHandler:
             "PORT": "8080",
             "ERROR_UI_URL": login_ui_integration.remote_app_data["oidc_error_url"],
             "SUPPORT_EMAIL": support_email,
+            "API_TOKEN": api_token,
             "DIRECTORY_API_URL": "",
         }
 

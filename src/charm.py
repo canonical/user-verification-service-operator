@@ -5,6 +5,7 @@
 """A Juju charm for Identity Platform User Verification Service."""
 
 import logging
+from secrets import token_hex
 
 import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
@@ -22,6 +23,8 @@ from charms.traefik_k8s.v0.traefik_route import TraefikRouteRequirer
 
 from configs import CharmConfig
 from constants import (
+    API_TOKEN_SECRET_KEY,
+    API_TOKEN_SECRET_LABEL,
     GRAFANA_DASHBOARD_INTEGRATION_NAME,
     INGRESS_INTEGRATION_NAME,
     LOGGING_RELATION_NAME,
@@ -40,6 +43,7 @@ from integrations import (
     TracingData,
     UIEndpointIntegration,
 )
+from secret import Secrets
 from services import PebbleService, WorkloadService
 from utils import (
     EVENT_DEFER_CONDITIONS,
@@ -60,6 +64,7 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
         self._workload_service = WorkloadService(self.unit)
         self._pebble_service = PebbleService(self.unit)
+        self._secrets = Secrets(self.model)
 
         self.login_ui_requirer = LoginUIEndpointsRequirer(
             self, relation_name=LOGIN_UI_INTEGRATION_NAME
@@ -113,6 +118,8 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
         framework.observe(self.on.user_verification_service_pebble_ready, self._on_pebble_ready)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.on.leader_elected, self._on_leader_elected)
+        self.framework.observe(self.on.leader_settings_changed, self._on_leader_settings_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_status)
 
         self.framework.observe(
@@ -143,6 +150,7 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         return self._pebble_service.render_pebble_layer(
             LoginUIEndpointData.load(self.login_ui_requirer),
             TracingData.load(self.tracing_requirer),
+            self._secrets,
             charm_config,
         )
 
@@ -155,10 +163,20 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         return f"{IngressData.load(self.ingress).endpoint}/ui/registration_error"
 
     @leader_unit
+    def _prepare_secrets(self) -> None:
+        self._secrets[API_TOKEN_SECRET_LABEL] = {API_TOKEN_SECRET_KEY: token_hex(16)}
+
+    @leader_unit
     def _on_internal_ingress_changed(self, event: ops.RelationEvent) -> None:
         if self.ingress.is_ready():
             ingress_config = IngressData.load(self.ingress).config
             self.ingress.submit_to_traefik(ingress_config)
+        self._holistic_handler(event)
+
+    def _on_leader_elected(self, event: ops.LeaderElectedEvent) -> None:
+        self._holistic_handler(event)
+
+    def _on_leader_settings_changed(self, event: ops.LeaderSettingsChangedEvent) -> None:
         self._holistic_handler(event)
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent):
@@ -187,8 +205,16 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
             event.defer()
             return
 
+        if not self._secrets.is_ready():
+            if not self.unit.is_leader():
+                return
+            self._prepare_secrets()
+
         if self.kratos_webhook_integration.is_ready():
-            self.kratos_webhook_integration.update_relation_data(self._webhook_url)
+            self.kratos_webhook_integration.update_relation_data(
+                self._webhook_url,
+                self._secrets.api_token,
+            )
 
         if self.registration_endpoints_integration.is_ready():
             self.registration_endpoints_integration.update_relation_data(self._registration_url)
@@ -207,6 +233,9 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
         if not login_ui_integration_exists(self):
             event.add_status(ops.BlockedStatus(f"Missing integration {LOGIN_UI_INTEGRATION_NAME}"))
+
+        if not self._secrets.is_ready():
+            event.add_status(ops.WaitingStatus("Waiting for secrets creation"))
 
         event.add_status(ops.ActiveStatus())
 
