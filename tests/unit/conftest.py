@@ -1,6 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+from typing import List
 from unittest.mock import MagicMock, PropertyMock, create_autospec
 
 import pytest
@@ -86,6 +87,26 @@ def login_ui_integration(login_ui_integration_data: dict) -> testing.Relation:
     )
 
 
+@pytest.fixture()
+def api_token() -> str:
+    return "secret"
+
+
+@pytest.fixture()
+def api_token_secret(api_token: str) -> testing.Secret:
+    return testing.Secret(
+        tracked_content={"apitoken": api_token},
+        label="apitokensecret",
+    )
+
+
+@pytest.fixture()
+def mocked_secrets(api_token_secret: testing.Secret) -> List[testing.Secret]:
+    return [
+        api_token_secret,
+    ]
+
+
 @pytest.fixture
 def support_email() -> str:
     return "support@email.com"
@@ -107,3 +128,4 @@ def mocked_collect_status_event() -> MagicMock:
 def all_satisfied_conditions(mocker: MockerFixture) -> None:
     mocker.patch("charm.container_connectivity", return_value=True)
     mocker.patch("charm.login_ui_integration_exists", return_value=True)
+    mocker.patch("charm.Secrets.is_ready", return_value=True)

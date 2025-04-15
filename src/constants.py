@@ -4,6 +4,8 @@
 # Charm constants
 WORKLOAD_CONTAINER = "user-verification-service"
 WORKLOAD_SERVICE = "user-verification-service"
+API_TOKEN_SECRET_KEY = "apitoken"
+API_TOKEN_SECRET_LABEL = "apitokensecret"
 
 # Application constants
 SERVICE_COMMAND = "user-verification-service serve"

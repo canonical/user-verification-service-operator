@@ -3,11 +3,14 @@
 
 import logging
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
 
 from ops.charm import CharmBase
 
 from constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
+
+if TYPE_CHECKING:
+    from charm import UserVerificationServiceOperatorCharm
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +42,10 @@ def integration_existence(integration_name: str) -> Condition:
 
 def container_connectivity(charm: CharmBase) -> bool:
     return charm.unit.get_container(WORKLOAD_CONTAINER).can_connect()
+
+
+def secret_readiness(charm: "UserVerificationServiceOperatorCharm") -> bool:
+    return charm._secrets.is_ready()
 
 
 login_ui_integration_exists = integration_existence(LOGIN_UI_INTEGRATION_NAME)

@@ -2,6 +2,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import asyncio
 import http
 import logging
 from pathlib import Path
@@ -63,8 +64,15 @@ async def test_build_and_deploy(ops_test: OpsTest, local_charm: Path, support_em
     await ops_test.model.integrate(TRAEFIK_APP, LOGIN_UI_APP)
 
     # Deploy the charm and wait for active/idle status
-    await ops_test.model.wait_for_idle(
-        apps=[APP_NAME, LOGIN_UI_APP, TRAEFIK_APP], status="active", timeout=1000
+    await asyncio.gather(
+        ops_test.model.wait_for_idle(
+            apps=[LOGIN_UI_APP, TRAEFIK_APP],
+            raise_on_error=False,
+            raise_on_blocked=False,
+            status="active",
+            timeout=1000,
+        ),
+        ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
     )
 
 
