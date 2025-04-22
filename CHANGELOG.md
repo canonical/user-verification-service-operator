@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/canonical/user-verification-service-operator/compare/v1.0.0...v1.0.1) (2025-04-22)
+
+
+### Bug Fixes
+
+* address setupttols CVEs ([ce0287c](https://github.com/canonical/user-verification-service-operator/commit/ce0287c131396426c2bb0f515d1d4c5ee302fb0b)), closes [#31](https://github.com/canonical/user-verification-service-operator/issues/31)
+
 ## 1.0.0 (2025-04-15)
 
 
