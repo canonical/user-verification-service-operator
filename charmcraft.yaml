@@ -83,6 +83,7 @@ parts:
   charm:
     charm-binary-python-packages:
       - "pydantic>=2"
+      - "setuptools>=70.0.0"
     build-packages:
       - rustc
       - cargo
