@@ -4,9 +4,13 @@
 # Testing tools configuration
 [tool.coverage.run]
 branch = true
+data_file = ".cover/.coverage"
 
 [tool.coverage.report]
 show_missing = true
+
+[tool.coverage.xml]
+output = ".cover/coverage.xml"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
