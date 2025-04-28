@@ -65,6 +65,7 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         self._workload_service = WorkloadService(self.unit)
         self._pebble_service = PebbleService(self.unit)
         self._secrets = Secrets(self.model)
+        self._config = CharmConfig(self.config, self.model)
 
         self.login_ui_requirer = LoginUIEndpointsRequirer(
             self, relation_name=LOGIN_UI_INTEGRATION_NAME
@@ -121,6 +122,7 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         self.framework.observe(self.on.leader_elected, self._on_leader_elected)
         self.framework.observe(self.on.leader_settings_changed, self._on_leader_settings_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_status)
+        self.framework.observe(self.on.secret_changed, self._on_secret_changed)
 
         self.framework.observe(
             self.on[LOGIN_UI_INTEGRATION_NAME].relation_joined, self._on_login_ui_changed
@@ -146,12 +148,11 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
     @property
     def _pebble_layer(self) -> ops.pebble.Layer:
-        charm_config = CharmConfig(self.config)
         return self._pebble_service.render_pebble_layer(
             LoginUIEndpointData.load(self.login_ui_requirer),
             TracingData.load(self.tracing_requirer),
             self._secrets,
-            charm_config,
+            self._config,
         )
 
     @property
@@ -180,6 +181,9 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         self._holistic_handler(event)
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent):
+        self._holistic_handler(event)
+
+    def _on_secret_changed(self, event: ops.SecretChangedEvent) -> None:
         self._holistic_handler(event)
 
     def _on_login_ui_changed(self, event: ops.RelationEvent):
@@ -233,6 +237,12 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
         if not login_ui_integration_exists(self):
             event.add_status(ops.BlockedStatus(f"Missing integration {LOGIN_UI_INTEGRATION_NAME}"))
+
+        if configs := self._config.get_missing_config_keys():
+            event.add_status(ops.BlockedStatus(f"Missing required configuration: {configs}"))
+
+        if not self._config.get_directory_api_token():
+            event.add_status(ops.BlockedStatus("Failed to retrieve directory API token secret"))
 
         if not self._secrets.is_ready():
             event.add_status(ops.WaitingStatus("Waiting for secrets creation"))

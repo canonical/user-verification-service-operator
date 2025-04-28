@@ -16,6 +16,8 @@ DEFAULT_CONTAINER_ENV = {
     "ERROR_UI_URL": "",
     "SUPPORT_EMAIL": "",
     "DIRECTORY_API_URL": "",
+    "DIRECTORY_API_TOKEN": "",
+    "SKIP_TLS_VERIFICATION": False,
 }
 
 

@@ -93,6 +93,11 @@ def api_token() -> str:
 
 
 @pytest.fixture()
+def directory_api_token() -> str:
+    return "directory_api_token"
+
+
+@pytest.fixture()
 def api_token_secret(api_token: str) -> testing.Secret:
     return testing.Secret(
         tracked_content={"apitoken": api_token},
@@ -101,10 +106,17 @@ def api_token_secret(api_token: str) -> testing.Secret:
 
 
 @pytest.fixture()
-def mocked_secrets(api_token_secret: testing.Secret) -> List[testing.Secret]:
-    return [
-        api_token_secret,
-    ]
+def directory_api_token_secret(directory_api_token: str) -> testing.Secret:
+    return testing.Secret(
+        tracked_content={"directoryapitoken": directory_api_token},
+    )
+
+
+@pytest.fixture()
+def mocked_secrets(
+    api_token_secret: testing.Secret, directory_api_token_secret: testing.Secret
+) -> List[testing.Secret]:
+    return [api_token_secret, directory_api_token_secret]
 
 
 @pytest.fixture
@@ -113,9 +125,18 @@ def support_email() -> str:
 
 
 @pytest.fixture
-def charm_config(support_email: str) -> dict:
+def directory_api_url() -> str:
+    return "http://directory.api.com"
+
+
+@pytest.fixture
+def charm_config(
+    support_email: str, directory_api_url: str, directory_api_token_secret: testing.Secret
+) -> dict:
     return {
         "support_email": support_email,
+        "directory_api_url": directory_api_url,
+        "directory_api_token": directory_api_token_secret.id,
     }
 
 
@@ -129,3 +150,4 @@ def all_satisfied_conditions(mocker: MockerFixture) -> None:
     mocker.patch("charm.container_connectivity", return_value=True)
     mocker.patch("charm.login_ui_integration_exists", return_value=True)
     mocker.patch("charm.Secrets.is_ready", return_value=True)
+    mocker.patch("charm.CharmConfig.get_missing_config_keys", return_value=[])
