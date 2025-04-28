@@ -19,3 +19,22 @@ juju deploy user-verification-service --trust
 ```
 
 You can follow the deployment status with `watch -c juju status --color`.
+
+## Security
+
+Please see [SECURITY.md](https://github.com/canonical/user-verification-service-operator/blob/main/SECURITY.md)
+for guidelines on reporting security issues.
+
+## Contributing
+
+Please see the [Juju SDK docs](https://juju.is/docs/sdk) for guidelines on
+enhancements to this charm following best practice guidelines,
+and [CONTRIBUTING.md](https://github.com/canonical/user-verification-service-operator/blob/main/CONTRIBUTING.md)
+for developer guidance.
+
+## License
+
+The Charmed User Verification Service is free software, distributed under the Apache
+Software License, version 2.0.
+See [LICENSE](https://github.com/canonical/user-verification-service-operator/blob/main/LICENSE)
+for more information.
