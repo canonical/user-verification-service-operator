@@ -90,7 +90,7 @@ async def test_public_ingress_integration(
     ops_test: OpsTest, http_client: httpx.AsyncClient
 ) -> None:
     address = await get_unit_address(ops_test, TRAEFIK_APP, 0)
-    url = f"http://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
+    url = f"https://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
 
     resp = await http_client.get(url, follow_redirects=False)
 
@@ -104,7 +104,7 @@ async def test_error_redirect(
     support_email: str,
 ) -> None:
     address = await get_unit_address(ops_test, TRAEFIK_APP, 0)
-    url = f"http://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
+    url = f"https://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
 
     resp = await http_client.get(url, follow_redirects=False)
 

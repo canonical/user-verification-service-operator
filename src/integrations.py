@@ -86,6 +86,9 @@ class IngressData:
     endpoint: AnyHttpUrl
     config: dict = field(default_factory=dict)
 
+    def to_env_vars(self) -> ServiceConfigs:
+        return {"UI_BASE_URL": str(self.endpoint)}
+
     @classmethod
     def load(cls, requirer: TraefikRouteRequirer) -> "IngressData":
         model, app = requirer._charm.model.name, requirer._charm.app.name

@@ -141,6 +141,7 @@ class TestHolisticHandler:
     def test_when_all_conditions_satisfied(
         self,
         login_ui_integration: testing.Relation,
+        ingress_integration: testing.Relation,
         mocked_secrets: List[testing.Secret],
         charm_config: dict,
         support_email: str,
@@ -152,8 +153,9 @@ class TestHolisticHandler:
         container = testing.Container("user-verification-service", can_connect=True)
         state_in = testing.State(
             containers={container},
-            relations=[login_ui_integration],
+            relations=[login_ui_integration, ingress_integration],
             config=charm_config,
+            leader=True,
             secrets=mocked_secrets,
         )
 
@@ -177,6 +179,7 @@ class TestHolisticHandler:
             "DIRECTORY_API_URL": directory_api_url,
             "DIRECTORY_API_TOKEN": directory_api_token,
             "SKIP_TLS_VERIFICATION": False,
+            "UI_BASE_URL": f"http://{ingress_integration.remote_app_data['external_host']}/{state_out.model.name}-user-verification-service",
         }
 
 

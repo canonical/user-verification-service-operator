@@ -151,6 +151,7 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         return self._pebble_service.render_pebble_layer(
             LoginUIEndpointData.load(self.login_ui_requirer),
             TracingData.load(self.tracing_requirer),
+            IngressData.load(self.ingress),
             self._secrets,
             self._config,
         )
@@ -240,9 +241,6 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
         if configs := self._config.get_missing_config_keys():
             event.add_status(ops.BlockedStatus(f"Missing required configuration: {configs}"))
-
-        if not self._config.get_directory_api_token():
-            event.add_status(ops.BlockedStatus("Failed to retrieve directory API token secret"))
 
         if not self._secrets.is_ready():
             event.add_status(ops.WaitingStatus("Waiting for secrets creation"))
