@@ -14,11 +14,50 @@ Python Operator for the Canonical Identity Platform User Verification Service
 
 ## Usage
 
+Deploy the charms:
+
 ```shell
 juju deploy user-verification-service --trust
+juju deploy identity-platform --trust
 ```
 
 You can follow the deployment status with `watch -c juju status --color`.
+
+### Configuration
+
+Now that we have deployed our charms, we will need to configure the charm.
+
+First we need to create a juju secret with the bind password:
+
+```console
+juju add-secret directory-api-token directory-api-token=ababaaba
+```
+
+Now we need to grant access to the secret to the charm:
+
+```console
+juju grant-secret directory-api-token user-verification-service
+```
+
+Then you will have to configure the charm, eg:
+
+```console
+juju config user-verification-service \
+  directory_api_url=https://directory.wpe.internal/validate \
+  directory_api_token=directory-api-token \
+  skip_tls_verification=true
+```
+
+Now you can integrate the charm with the identity-platform:
+
+```console
+juju integrate user-verification-service:kratos-registration-webhook kratos
+juju integrate user-verification-service:registration-endpoint-info kratos
+juju integrate user-verification-service identity-platform-login-ui
+juju integrate user-verification-service traefik-public
+```
+
+Once the charms reach an active state, any users that try to log in to the identity-platform for the first time will be checked against the directory API.
 
 ## Security
 
