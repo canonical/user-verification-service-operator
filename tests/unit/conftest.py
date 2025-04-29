@@ -100,7 +100,7 @@ def directory_api_token() -> str:
 @pytest.fixture()
 def api_token_secret(api_token: str) -> testing.Secret:
     return testing.Secret(
-        tracked_content={"apitoken": api_token},
+        tracked_content={"api-token": api_token},
         label="apitokensecret",
     )
 
@@ -108,7 +108,7 @@ def api_token_secret(api_token: str) -> testing.Secret:
 @pytest.fixture()
 def directory_api_token_secret(directory_api_token: str) -> testing.Secret:
     return testing.Secret(
-        tracked_content={"directoryapitoken": directory_api_token},
+        tracked_content={"directory-api-token": directory_api_token},
     )
 
 

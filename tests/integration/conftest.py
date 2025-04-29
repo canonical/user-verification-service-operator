@@ -105,7 +105,7 @@ async def charm_config(ops_test: OpsTest, support_email: str, directory_api_url:
     secrets = await ops_test.model.list_secrets({"label": DIRECTORY_API_TOKEN_SECRET})
     if not secrets:
         directory_api_token = await ops_test.model.add_secret(
-            DIRECTORY_API_TOKEN_SECRET, ["directoryapitoken=secret"]
+            DIRECTORY_API_TOKEN_SECRET, ["directory-api-token=secret"]
         )
     else:
         directory_api_token = secrets[0].uri
