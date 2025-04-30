@@ -27,6 +27,19 @@ config:
       description: |
         The email that the user will be instructed to contact in case of error
       type: string
+    directory_api_url:
+      description: |
+        The URL for reaching the directory API validation endpoint. E.g. https://directory.com/validate
+      type: string
+    directory_api_token:
+      description: |
+        A secret with the token to use for authenticating with the identity API
+      type: secret
+    skip_tls_verification:
+      description: |
+        Whether to validate the directory API TLS cert
+      type: boolean
+      default: false
 
 requires:
   ui-endpoint-info:
@@ -77,7 +90,7 @@ resources:
   oci-image:
     type: oci-image
     description: OCI image for user-verification-service
-    upstream-source: ghcr.io/canonical/user-verification-service:main
+    upstream-source: ghcr.io/canonical/user-verification-service:v0.3.1
 
 parts:
   charm:

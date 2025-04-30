@@ -14,6 +14,7 @@ from pytest_operator.plugin import OpsTest
 
 from tests.integration.conftest import (
     APP_NAME,
+    DIRECTORY_API_TOKEN_SECRET,
     INGRESS_DOMAIN,
     LOGIN_UI_APP,
     LOGIN_UI_CHARM,
@@ -32,7 +33,7 @@ async def get_unit_address(ops_test: OpsTest, app_name: str, unit_num: int) -> s
 
 
 @pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest, local_charm: Path, support_email: str) -> None:
+async def test_build_and_deploy(ops_test: OpsTest, local_charm: Path, charm_config: dict) -> None:
     """Build the charm-under-test and deploy it together with related charms.
 
     Assert on the unit status before any relations/configurations take place.
@@ -43,8 +44,9 @@ async def test_build_and_deploy(ops_test: OpsTest, local_charm: Path, support_em
         local_charm,
         resources=resources,
         application_name=APP_NAME,
-        config={"support_email": support_email},
+        config=charm_config,
     )
+    await ops_test.model.grant_secret(DIRECTORY_API_TOKEN_SECRET, APP_NAME)
     await ops_test.model.deploy(
         TRAEFIK_CHARM,
         application_name=TRAEFIK_APP,
@@ -88,7 +90,7 @@ async def test_public_ingress_integration(
     ops_test: OpsTest, http_client: httpx.AsyncClient
 ) -> None:
     address = await get_unit_address(ops_test, TRAEFIK_APP, 0)
-    url = f"http://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
+    url = f"https://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
 
     resp = await http_client.get(url, follow_redirects=False)
 
@@ -102,7 +104,7 @@ async def test_error_redirect(
     support_email: str,
 ) -> None:
     address = await get_unit_address(ops_test, TRAEFIK_APP, 0)
-    url = f"http://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
+    url = f"https://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
 
     resp = await http_client.get(url, follow_redirects=False)
 
@@ -111,4 +113,4 @@ async def test_error_redirect(
     )
     loc = urlparse(resp.headers.get("location"))
     q = parse_qs(loc.query)
-    assert f"Contact support at {support_email}" in q.get("error_description")[0]
+    assert f"contact support at {support_email}" in q.get("error_description")[0]

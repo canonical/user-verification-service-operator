@@ -21,6 +21,7 @@ TRAEFIK_APP = "traefik"
 INGRESS_DOMAIN = "public"
 LOGIN_UI_CHARM = "identity-platform-login-ui-operator"
 LOGIN_UI_APP = "login-ui"
+DIRECTORY_API_TOKEN_SECRET = "directory_api_token"
 
 
 async def get_unit_data(ops_test: OpsTest, unit_name: str) -> dict:
@@ -92,3 +93,25 @@ async def http_client() -> AsyncGenerator[httpx.AsyncClient, None]:
 @pytest.fixture
 def support_email() -> str:
     return "support@email.com"
+
+
+@pytest.fixture
+def directory_api_url() -> str:
+    return "https://directory.api.com"
+
+
+@pytest_asyncio.fixture
+async def charm_config(ops_test: OpsTest, support_email: str, directory_api_url: str) -> dict:
+    secrets = await ops_test.model.list_secrets({"label": DIRECTORY_API_TOKEN_SECRET})
+    if not secrets:
+        directory_api_token = await ops_test.model.add_secret(
+            DIRECTORY_API_TOKEN_SECRET, ["directory-api-token=secret"]
+        )
+    else:
+        directory_api_token = secrets[0].uri
+
+    return {
+        "support_email": support_email,
+        "directory_api_url": directory_api_url,
+        "directory_api_token": directory_api_token,
+    }

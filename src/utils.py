@@ -44,8 +44,8 @@ def container_connectivity(charm: CharmBase) -> bool:
     return charm.unit.get_container(WORKLOAD_CONTAINER).can_connect()
 
 
-def secret_readiness(charm: "UserVerificationServiceOperatorCharm") -> bool:
-    return charm._secrets.is_ready()
+def config_readiness(charm: "UserVerificationServiceOperatorCharm") -> bool:
+    return not charm._config.get_missing_config_keys()
 
 
 login_ui_integration_exists = integration_existence(LOGIN_UI_INTEGRATION_NAME)
@@ -53,7 +53,7 @@ ingress_integration_exists = integration_existence(INGRESS_INTEGRATION_NAME)
 
 
 # Condition failure causes early return without doing anything
-NOOP_CONDITIONS: tuple[Condition, ...] = (container_connectivity,)
+NOOP_CONDITIONS: tuple[Condition, ...] = (container_connectivity, config_readiness)
 
 
 # Condition failure causes early return with corresponding event deferred
