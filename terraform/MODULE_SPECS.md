@@ -35,4 +35,6 @@ user-verification-service charm using the Juju Terraform provider.
 | Name | Description |
 |------|-------------|
 | <a name="output_app_name"></a> [app\_name](#output\_app\_name) | The Juju application name |
+| <a name="output_requires"></a> [requires](#output\_requires) | The Juju integrations that the charm requires |
+| <a name="output_provides"></a> [provides](#output\_provides) | The Juju integrations that the charm provides |
 <!-- END_TF_DOCS -->
