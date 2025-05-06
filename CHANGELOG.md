@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/canonical/user-verification-service-operator/compare/v1.1.0...v1.1.1) (2025-05-06)
+
+
+### Bug Fixes
+
+* set parse to False ([684ffa7](https://github.com/canonical/user-verification-service-operator/commit/684ffa7968208cdc01e5795aa4af7fb7fece8eac))
+
 ## [1.1.0](https://github.com/canonical/user-verification-service-operator/compare/v1.0.1...v1.1.0) (2025-05-05)
 
 
