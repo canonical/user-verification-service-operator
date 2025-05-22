@@ -1,4 +1,4 @@
 ops ~= 2.17
 jinja2
 pydantic~=2.11.3
-cosl~=0.1.0
+cosl~=1.0.0
