@@ -6,7 +6,8 @@ WORKLOAD_CONTAINER = "user-verification-service"
 WORKLOAD_SERVICE = "user-verification-service"
 API_TOKEN_SECRET_KEY = "api-token"
 API_TOKEN_SECRET_LABEL = "apitokensecret"
-CONFIG_DIRECTORY_API_TOKEN_SECRET_KEY = "directory-api-token"
+CONFIG_CONSUMER_KEY_SECRET_KEY = "consumer-key"
+CONFIG_CONSUMER_SECRET_SECRET_KEY = "consumer-secret"
 
 # Application constants
 SERVICE_COMMAND = "user-verification-service serve"

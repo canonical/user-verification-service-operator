@@ -27,19 +27,22 @@ config:
       description: |
         The email that the user will be instructed to contact in case of error
       type: string
-    directory_api_url:
+    salesforce_domain:
       description: |
-        The URL for reaching the directory API validation endpoint. E.g. https://directory.com/validate
+        The Salesforce domain URL. E.g. https://login.test.salesfoce.com
       type: string
-    directory_api_token:
+    salesforce_consumer_secret:
       description: |
-        A secret with the token to use for authenticating with the identity API
+        A secret with the consumer key/secret pair to use when calling the salesforce API.
+
+        The secret must contain the keys `consumer-key` and `consumer-secret`
       type: secret
-    skip_tls_verification:
+    salesforce_enabled:
       description: |
-        Whether to validate the directory API TLS cert
+        Whether the salesforce integration is enabled.
       type: boolean
-      default: false
+      default: true
+
 
 requires:
   ui-endpoint-info:
@@ -89,7 +92,7 @@ resources:
   oci-image:
     type: oci-image
     description: OCI image for user-verification-service
-    upstream-source: ghcr.io/canonical/user-verification-service:v0.3.1
+    upstream-source: ghcr.io/canonical/user-verification-service:v0.4.1
 
 parts:
   charm:

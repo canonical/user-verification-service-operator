@@ -146,8 +146,8 @@ class TestHolisticHandler:
         charm_config: dict,
         support_email: str,
         api_token: str,
-        directory_api_url: str,
-        directory_api_token: testing.Secret,
+        salesforce_domain: str,
+        salesforce_consumer_info: testing.Secret,
     ) -> None:
         ctx = testing.Context(UserVerificationServiceOperatorCharm)
         container = testing.Container("user-verification-service", can_connect=True)
@@ -176,8 +176,8 @@ class TestHolisticHandler:
             "ERROR_UI_URL": login_ui_integration.remote_app_data["oidc_error_url"],
             "SUPPORT_EMAIL": support_email,
             "API_TOKEN": api_token,
-            "DIRECTORY_API_URL": directory_api_url,
-            "DIRECTORY_API_TOKEN": directory_api_token,
+            "DIRECTORY_API_URL": salesforce_domain,
+            "DIRECTORY_API_TOKEN": salesforce_consumer_info,
             "SKIP_TLS_VERIFICATION": False,
             "UI_BASE_URL": f"http://{ingress_integration.remote_app_data['external_host']}/{state_out.model.name}-user-verification-service",
         }
