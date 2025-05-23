@@ -17,6 +17,12 @@ from charms.kratos.v0.kratos_registration_web_hook import (
     KratosRegistrationWebhookProvider,
 )
 from charms.loki_k8s.v1.loki_push_api import LogForwarder
+from charms.observability_libs.v0.kubernetes_compute_resources_patch import (
+    K8sResourcePatchFailedEvent,
+    KubernetesComputeResourcesPatch,
+    ResourceRequirements,
+    adjust_resource_requirements,
+)
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 from charms.traefik_k8s.v0.traefik_route import TraefikRouteRequirer
@@ -105,6 +111,12 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
             ],
         )
 
+        self.resources_patch = KubernetesComputeResourcesPatch(
+            self,
+            WORKLOAD_CONTAINER,
+            resource_reqs_func=self._resource_reqs_from_config,
+        )
+
         # Loki logging relation
         self._log_forwarder = LogForwarder(self, relation_name=LOGGING_RELATION_NAME)
 
@@ -138,6 +150,11 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
         self.framework.observe(
             self.kratos_registration_webhook.on.ready, self._on_kratos_webhook_ready
+        )
+
+        # resource patching
+        self.framework.observe(
+            self.resources_patch.on.patch_failed, self._on_resource_patch_failed
         )
 
         # internal ingress
@@ -196,6 +213,10 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
         self._workload_service.set_version()
 
+    def _on_resource_patch_failed(self, event: K8sResourcePatchFailedEvent) -> None:
+        logger.error(f"Failed to patch resource constraints: {event.message}")
+        self.unit.status = ops.BlockedStatus(event.message)
+
     def _on_kratos_webhook_ready(self, event: ops.RelationEvent) -> None:
         self._holistic_handler(event)
 
@@ -246,6 +267,11 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
             event.add_status(ops.WaitingStatus("Waiting for secrets creation"))
 
         event.add_status(ops.ActiveStatus())
+
+    def _resource_reqs_from_config(self) -> ResourceRequirements:
+        limits = {"cpu": self.model.config.get("cpu"), "memory": self.model.config.get("memory")}
+        requests = {"cpu": "100m", "memory": "200Mi"}
+        return adjust_resource_requirements(limits, requests, adhere_to_requests=True)
 
 
 if __name__ == "__main__":  # pragma: nocover

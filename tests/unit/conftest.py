@@ -10,6 +10,20 @@ from ops.model import Container, Unit
 from pytest_mock import MockerFixture
 
 
+@pytest.fixture(autouse=True)
+def mocked_k8s_resource_patch(mocker: MockerFixture) -> None:
+    mocker.patch(
+        "charms.observability_libs.v0.kubernetes_compute_resources_patch.ResourcePatcher",
+        autospec=True,
+    )
+    mocker.patch.multiple(
+        "charm.KubernetesComputeResourcesPatch",
+        _namespace="kratos-model",
+        _patch=lambda *a, **kw: True,
+        is_ready=lambda *a, **kw: True,
+    )
+
+
 @pytest.fixture
 def mocked_workload_service_version(mocker: MockerFixture) -> MagicMock:
     return mocker.patch(
