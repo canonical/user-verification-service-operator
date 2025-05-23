@@ -135,8 +135,8 @@ def charm_config(
 ) -> dict:
     return {
         "support_email": support_email,
-        "directory_api_url": salesforce_domain,
-        "directory_api_token": salesforce_consumer_secret.id,
+        "salesforce_domain": salesforce_domain,
+        "salesforce_consumer_secret": salesforce_consumer_secret.id,
     }
 
 

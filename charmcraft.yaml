@@ -11,6 +11,7 @@ links:
   source: https://github.com/canonical/user-verification-service-operator
   issues: https://github.com/canonical/user-verification-service-operator/issues
 
+charm-user: non-root
 platforms:
   ubuntu@22.04:amd64:
 
@@ -86,6 +87,8 @@ provides:
 
 containers:
   user-verification-service:
+    gid: 584792
+    uid: 584792
     resource: oci-image
 
 resources:

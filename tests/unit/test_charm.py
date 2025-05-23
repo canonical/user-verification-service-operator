@@ -176,9 +176,10 @@ class TestHolisticHandler:
             "ERROR_UI_URL": login_ui_integration.remote_app_data["oidc_error_url"],
             "SUPPORT_EMAIL": support_email,
             "API_TOKEN": api_token,
-            "DIRECTORY_API_URL": salesforce_domain,
-            "DIRECTORY_API_TOKEN": salesforce_consumer_info,
-            "SKIP_TLS_VERIFICATION": False,
+            "SALESFORCE_ENABLED": True,
+            "SALESFORCE_DOMAIN": salesforce_domain,
+            "SALESFORCE_CONSUMER_KEY": salesforce_consumer_info["consumer-key"],
+            "SALESFORCE_CONSUMER_SECRET": salesforce_consumer_info["consumer-secret"],
             "UI_BASE_URL": f"http://{ingress_integration.remote_app_data['external_host']}/{state_out.model.name}-user-verification-service",
         }
 
