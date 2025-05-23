@@ -1,13 +1,27 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-from typing import List
+from typing import Dict, List
 from unittest.mock import MagicMock, PropertyMock, create_autospec
 
 import pytest
 from ops import CollectStatusEvent, EventBase, testing
 from ops.model import Container, Unit
 from pytest_mock import MockerFixture
+
+
+@pytest.fixture(autouse=True)
+def mocked_k8s_resource_patch(mocker: MockerFixture) -> None:
+    mocker.patch(
+        "charms.observability_libs.v0.kubernetes_compute_resources_patch.ResourcePatcher",
+        autospec=True,
+    )
+    mocker.patch.multiple(
+        "charm.KubernetesComputeResourcesPatch",
+        _namespace="kratos-model",
+        _patch=lambda *a, **kw: True,
+        is_ready=lambda *a, **kw: True,
+    )
 
 
 @pytest.fixture
@@ -93,8 +107,8 @@ def api_token() -> str:
 
 
 @pytest.fixture()
-def directory_api_token() -> str:
-    return "directory_api_token"
+def salesforce_consumer_info() -> Dict[str, str]:
+    return {"consumer-key": "key", "consumer-secret": "secret"}
 
 
 @pytest.fixture()
@@ -106,17 +120,17 @@ def api_token_secret(api_token: str) -> testing.Secret:
 
 
 @pytest.fixture()
-def directory_api_token_secret(directory_api_token: str) -> testing.Secret:
+def salesforce_consumer_secret(salesforce_consumer_info: str) -> testing.Secret:
     return testing.Secret(
-        tracked_content={"directory-api-token": directory_api_token},
+        tracked_content=salesforce_consumer_info,
     )
 
 
 @pytest.fixture()
 def mocked_secrets(
-    api_token_secret: testing.Secret, directory_api_token_secret: testing.Secret
+    api_token_secret: testing.Secret, salesforce_consumer_secret: testing.Secret
 ) -> List[testing.Secret]:
-    return [api_token_secret, directory_api_token_secret]
+    return [api_token_secret, salesforce_consumer_secret]
 
 
 @pytest.fixture
@@ -125,18 +139,18 @@ def support_email() -> str:
 
 
 @pytest.fixture
-def directory_api_url() -> str:
-    return "http://directory.api.com"
+def salesforce_domain() -> str:
+    return "https://domain.salesforce.com"
 
 
 @pytest.fixture
 def charm_config(
-    support_email: str, directory_api_url: str, directory_api_token_secret: testing.Secret
+    support_email: str, salesforce_domain: str, salesforce_consumer_secret: testing.Secret
 ) -> dict:
     return {
         "support_email": support_email,
-        "directory_api_url": directory_api_url,
-        "directory_api_token": directory_api_token_secret.id,
+        "salesforce_domain": salesforce_domain,
+        "salesforce_consumer_secret": salesforce_consumer_secret.id,
     }
 
 

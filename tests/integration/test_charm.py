@@ -14,7 +14,6 @@ from pytest_operator.plugin import OpsTest
 
 from tests.integration.conftest import (
     APP_NAME,
-    DIRECTORY_API_TOKEN_SECRET,
     INGRESS_DOMAIN,
     LOGIN_UI_APP,
     LOGIN_UI_CHARM,
@@ -46,7 +45,6 @@ async def test_build_and_deploy(ops_test: OpsTest, local_charm: Path, charm_conf
         application_name=APP_NAME,
         config=charm_config,
     )
-    await ops_test.model.grant_secret(DIRECTORY_API_TOKEN_SECRET, APP_NAME)
     await ops_test.model.deploy(
         TRAEFIK_CHARM,
         application_name=TRAEFIK_APP,

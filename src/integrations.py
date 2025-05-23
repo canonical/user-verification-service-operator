@@ -136,7 +136,7 @@ class KratosRegistrationWebhookIntegration:
                 emit_analytics_event=False,
                 response=ResponseConfig(
                     ignore=False,
-                    parse=False,
+                    parse=True,
                 ),
                 auth=AuthConfig(
                     config=_AuthConfig(

@@ -27,25 +27,24 @@ You can follow the deployment status with `watch -c juju status --color`.
 
 Now that we have deployed our charms, we will need to configure the charm.
 
-First we need to create a juju secret with the bind password:
+First we need to create a juju secret with the consumer id/secret:
 
 ```console
-juju add-secret directory-api-token directory-api-token=ababaaba
+juju add-secret salesforce-consumer consumer-key=<consumer_key> consumer-secret=<consumer_secret>
 ```
 
 Now we need to grant access to the secret to the charm:
 
 ```console
-juju grant-secret directory-api-token user-verification-service
+juju grant-secret salesforce-consumer user-verification-service
 ```
 
 Then you will have to configure the charm, eg:
 
 ```console
 juju config user-verification-service \
-  directory_api_url=https://directory.wpe.internal/validate \
-  directory_api_token=directory-api-token \
-  skip_tls_verification=true
+  salesforce_domain=https://canonicalhr--staging.sandbox.my.salesforce.com \
+  salesforce_consumer_secret=salesforce-consumer
 ```
 
 Now you can integrate the charm with the identity-platform:
@@ -57,7 +56,7 @@ juju integrate user-verification-service identity-platform-login-ui
 juju integrate user-verification-service traefik-public
 ```
 
-Once the charms reach an active state, any users that try to log in to the identity-platform for the first time will be checked against the directory API.
+Once the charms reach an active state, any users that try to log in to the identity-platform for the first time will be checked against the Salesforce API.
 
 ## Security
 
