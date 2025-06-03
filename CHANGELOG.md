@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/canonical/user-verification-service-operator/compare/v1.1.1...v1.2.0) (2025-05-30)
+
+
+### Features
+
+* use Salesforce instead of directory API ([bf1a035](https://github.com/canonical/user-verification-service-operator/commit/bf1a035770cc5ac8928b2273923782689f315475))
+
+
+### Bug Fixes
+
+* add resource constraints ([38febe2](https://github.com/canonical/user-verification-service-operator/commit/38febe2e6f4654ab2d93e2e9f1b89d3d47cbbbd7))
+* run as non root ([e4efa3f](https://github.com/canonical/user-verification-service-operator/commit/e4efa3f1f092455262c343e17b667ea3318ce60c))
+* set parse to True ([b48ffe4](https://github.com/canonical/user-verification-service-operator/commit/b48ffe48f2078d1b8910d7594b0368e507ab0c0f))
+
 ## [1.1.1](https://github.com/canonical/user-verification-service-operator/compare/v1.1.0...v1.1.1) (2025-05-06)
 
 
