@@ -17,6 +17,18 @@ platforms:
 
 config:
   options:
+    http_proxy:
+      description: URL of the HTTP proxy eg http://proxy.internal:6666, it will set the HTTP_PROXY var in the workload environment
+      type: string
+      default: ''
+    https_proxy:
+      description: URL of the HTTPS proxy eg http://proxy.internal:6666, it will set the HTTPS_PROXY var in the workload environment
+      type: string
+      default: ''
+    no_proxy:
+      description: Domains that need to be excluded from proxying no_proxy="test.com,test.co.uk", it is a comma separate list
+      type: string
+      default: ''
     log_level:
       description: |
         Configures the log level.

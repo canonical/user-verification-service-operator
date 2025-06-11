@@ -168,6 +168,9 @@ class TestHolisticHandler:
         ]
         assert state_out.unit_status == testing.ActiveStatus()
         assert layer.services.get("user-verification-service").environment == {
+            "HTTPS_PROXY": "http://proxy.internal:6666",
+            "HTTP_PROXY": "http://proxy.internal:6666",
+            "NO_PROXY": "http://proxy.internal:6666",
             "OTEL_HTTP_ENDPOINT": "",
             "OTEL_GRPC_ENDPOINT": "",
             "TRACING_ENABLED": False,

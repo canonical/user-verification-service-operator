@@ -148,6 +148,9 @@ def charm_config(
     support_email: str, salesforce_domain: str, salesforce_consumer_secret: testing.Secret
 ) -> dict:
     return {
+        "http_proxy": "http://proxy.internal:6666",
+        "https_proxy": "http://proxy.internal:6666",
+        "no_proxy": "http://proxy.internal:6666",
         "support_email": support_email,
         "salesforce_domain": salesforce_domain,
         "salesforce_consumer_secret": salesforce_consumer_secret.id,
