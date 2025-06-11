@@ -43,5 +43,8 @@ class CharmConfig:
                 "SALESFORCE_CONSUMER_KEY": consumer[0],
                 "SALESFORCE_CONSUMER_SECRET": consumer[1],
                 "SALESFORCE_DOMAIN": self._config.get("salesforce_domain"),
+                "HTTP_PROXY": self._config.get("http_proxy"),
+                "HTTPS_PROXY": self._config.get("https_proxy"),
+                "NO_PROXY": self._config.get("no_proxy"),
             })
         return env
