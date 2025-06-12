@@ -79,7 +79,7 @@ jobs:
         revision: ${{ needs.revision.outputs.revision }}
         channel: ${{ needs.publish.outputs.channel}}
         application: user-verification-service
-        tf-application-resource: module.user_verification_service.juju_application.application
+        tf-application-resource: module.application.juju_application.application
     secrets:
       CLIENT_ID: ${{ secrets.JIMM_DEV_CLIENT_ID }}
       CLIENT_SECRET: ${{ secrets.JIMM_DEV_CLIENT_SECRET }}
