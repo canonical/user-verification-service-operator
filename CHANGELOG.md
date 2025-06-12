@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/canonical/user-verification-service-operator/compare/v1.3.0...v1.3.1) (2025-06-12)
+
+
+### Bug Fixes
+
+* fix ci deploy wf ([2eb0cdc](https://github.com/canonical/user-verification-service-operator/commit/2eb0cdcc5c9e6b0a0e1d70979812e48837af7531))
+
 ## [1.3.0](https://github.com/canonical/user-verification-service-operator/compare/v1.2.0...v1.3.0) (2025-06-12)
 
 
