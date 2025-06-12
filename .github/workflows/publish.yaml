@@ -64,3 +64,43 @@ jobs:
           CHARM_NAME: ${{ steps.set-charm-name.outputs.charm_name }}
           # only cater for latest track for now
           TRACK: latest
+
+  dev-deploy:
+    concurrency:
+      group: ${{ needs.publish.outputs.track }}-${{ needs.publish.outputs.channel }}
+      cancel-in-progress: true
+    needs:
+      - publish
+      - revision
+    if: ${{ (needs.publish.outputs.channel == 'latest/edge') }}
+    uses: canonical/identity-team/.github/workflows/charm-deploy.yaml@1.8.7
+    with:
+        model: dev-iam
+        revision: ${{ needs.revision.outputs.revision }}
+        channel: ${{ needs.publish.outputs.channel}}
+        application: user-verification-service
+        tf-application-resource: module.user_verification_service.juju_application.application
+    secrets:
+      CLIENT_ID: ${{ secrets.JIMM_DEV_CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.JIMM_DEV_CLIENT_SECRET }}
+      JIMM_URL: ${{ secrets.JIMM_URL }}
+
+  stg-deploy:
+    concurrency:
+      group: ${{ needs.publish.outputs.track }}-${{ needs.publish.outputs.channel }}
+      cancel-in-progress: true
+    needs:
+      - publish
+      - revision
+    if: ${{ (needs.publish.outputs.channel == 'latest/stable') }}
+    uses: canonical/identity-team/.github/workflows/charm-deploy.yaml@1.8.7
+    with:
+      model: stg-iam
+      revision: ${{ needs.revision.outputs.revision }}
+      channel: ${{ needs.publish.outputs.channel}}
+      application: user-verification-service
+      tf-application-resource: module.user_verification_service.juju_application.application
+    secrets:
+        CLIENT_ID: ${{ secrets.JIMM_STG_CLIENT_ID }}
+        CLIENT_SECRET: ${{ secrets.JIMM_STG_CLIENT_SECRET }}
+        JIMM_URL: ${{ secrets.JIMM_URL }}
