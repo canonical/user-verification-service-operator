@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/canonical/user-verification-service-operator/compare/v1.2.0...v1.2.1) (2025-06-12)
+
+
+### Bug Fixes
+
+* add http_proxy config ([95a8d6c](https://github.com/canonical/user-verification-service-operator/commit/95a8d6cad8ce992ab804a025d09c4cd318ba5fdd))
+
 ## [1.2.0](https://github.com/canonical/user-verification-service-operator/compare/v1.1.1...v1.2.0) (2025-05-30)
 
 
