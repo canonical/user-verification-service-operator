@@ -63,7 +63,7 @@ data "juju_secret" "salesforce_consumer_secret" {
   model = var.model
 }
 
-module "user_verification_service" {
+module "application" {
   source                           = "../terraform"
   model_name                       = var.model
   app_name                         = var.application_name
