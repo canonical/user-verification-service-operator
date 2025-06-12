@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/canonical/user-verification-service-operator/compare/v1.3.1...v1.3.2) (2025-06-12)
+
+
+### Bug Fixes
+
+* add constraint refault value ([e140d1f](https://github.com/canonical/user-verification-service-operator/commit/e140d1f53948670947eda242f5c6f75e5428c914))
+
 ## [1.3.1](https://github.com/canonical/user-verification-service-operator/compare/v1.3.0...v1.3.1) (2025-06-12)
 
 
