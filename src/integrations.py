@@ -31,7 +31,6 @@ from env_vars import EnvVars
 
 logger = logging.getLogger(__name__)
 
-JsonSerializable: TypeAlias = Union[dict[str, Any], list[Any], int, str, float, bool, Type[None]]
 WebhookBody = base64.b64encode(b"""function(ctx) {
   email: ctx.identity.traits.email
 }""").decode()

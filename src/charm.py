@@ -33,7 +33,7 @@ from constants import (
     API_TOKEN_SECRET_LABEL,
     GRAFANA_DASHBOARD_INTEGRATION_NAME,
     INGRESS_INTEGRATION_NAME,
-    LOGGING_RELATION_NAME,
+    LOGGING_INTEGRATION_NAME,
     LOGIN_UI_INTEGRATION_NAME,
     PORT,
     PROMETHEUS_SCRAPE_INTEGRATION_NAME,
@@ -118,7 +118,7 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         )
 
         # Loki logging relation
-        self._log_forwarder = LogForwarder(self, relation_name=LOGGING_RELATION_NAME)
+        self._log_forwarder = LogForwarder(self, relation_name=LOGGING_INTEGRATION_NAME)
 
         self._grafana_dashboards = GrafanaDashboardProvider(
             self,
