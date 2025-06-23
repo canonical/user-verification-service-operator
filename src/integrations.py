@@ -5,7 +5,6 @@ import base64
 import json
 import logging
 from dataclasses import dataclass, field, fields
-from typing import Any, Type, TypeAlias, Union
 from urllib.parse import urlparse
 
 from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
@@ -31,7 +30,6 @@ from env_vars import EnvVars
 
 logger = logging.getLogger(__name__)
 
-JsonSerializable: TypeAlias = Union[dict[str, Any], list[Any], int, str, float, bool, Type[None]]
 WebhookBody = base64.b64encode(b"""function(ctx) {
   email: ctx.identity.traits.email
 }""").decode()
