@@ -13,11 +13,8 @@ from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
     LoginUIProviderData,
 )
 from charms.kratos.v0.kratos_registration_web_hook import (
-    AuthConfig,
     KratosRegistrationWebhookProvider,
     ProviderData,
-    ResponseConfig,
-    _AuthConfig,
 )
 from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 from charms.traefik_k8s.v0.traefik_route import TraefikRouteRequirer
@@ -132,17 +129,11 @@ class KratosRegistrationWebhookIntegration:
                 body=f"base64://{WebhookBody}",
                 method="POST",
                 emit_analytics_event=False,
-                response=ResponseConfig(
-                    ignore=False,
-                    parse=True,
-                ),
-                auth=AuthConfig(
-                    config=_AuthConfig(
-                        name="Authorization",
-                        value=api_token,
-                        in_="header",
-                    )
-                ),
+                response_ignore=False,
+                response_parse=True,
+                auth_config_name="Authorization",
+                auth_config_value=api_token,
+                auth_config_in="header",
             )
         )
 
