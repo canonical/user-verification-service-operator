@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/canonical/user-verification-service-operator/compare/v1.3.2...v1.3.3) (2025-07-01)
+
+
+### Bug Fixes
+
+* bump kratos lib ([b0f83f5](https://github.com/canonical/user-verification-service-operator/commit/b0f83f58173da1731324fcbbf6dd4114033d528d))
+
 ## [1.3.2](https://github.com/canonical/user-verification-service-operator/compare/v1.3.1...v1.3.2) (2025-06-12)
 
 
