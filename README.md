@@ -39,12 +39,12 @@ Now we need to grant access to the secret to the charm:
 juju grant-secret salesforce-consumer user-verification-service
 ```
 
-Then you will have to configure the charm, eg:
+Use the returned secret ID to configure the charm, eg:
 
 ```console
 juju config user-verification-service \
   salesforce_domain=https://canonicalhr--staging.sandbox.my.salesforce.com \
-  salesforce_consumer_secret=salesforce-consumer
+  salesforce_consumer_secret=secret:<secret-id>
 ```
 
 Now you can integrate the charm with the identity-platform:
