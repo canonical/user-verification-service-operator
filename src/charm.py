@@ -131,6 +131,7 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
 
         framework.observe(self.on.user_verification_service_pebble_ready, self._on_pebble_ready)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.leader_elected, self._on_leader_elected)
         self.framework.observe(self.on.leader_settings_changed, self._on_leader_settings_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_status)
@@ -199,6 +200,9 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         self._holistic_handler(event)
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent):
+        self._holistic_handler(event)
+
+    def _on_update_status(self, event: ops.UpdateStatusEvent):
         self._holistic_handler(event)
 
     def _on_secret_changed(self, event: ops.SecretChangedEvent) -> None:
