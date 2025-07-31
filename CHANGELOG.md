@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/canonical/user-verification-service-operator/compare/v1.3.3...v1.3.4) (2025-07-31)
+
+
+### Bug Fixes
+
+* don't restart service if config didn't change ([b2dc340](https://github.com/canonical/user-verification-service-operator/commit/b2dc340fb9cbcce41e9288be192d698565f5a73e))
+
 ## [1.3.3](https://github.com/canonical/user-verification-service-operator/compare/v1.3.2...v1.3.3) (2025-07-01)
 
 
