@@ -4,12 +4,14 @@
 import logging
 from collections import ChainMap
 from pathlib import PurePath
+from typing import Optional
 
 from ops.model import Container, ModelError, Unit
-from ops.pebble import Layer, LayerDict
+from ops.pebble import CheckStatus, ConnectionError, Layer, LayerDict, ServiceInfo
 
 from cli import CommandLine
 from constants import (
+    PEBBLE_READY_CHECK_NAME,
     PORT,
     SERVICE_COMMAND,
     WORKLOAD_CONTAINER,
@@ -32,7 +34,7 @@ PEBBLE_LAYER_DICT = {
         }
     },
     "checks": {
-        "ready": {
+        PEBBLE_READY_CHECK_NAME: {
             "override": "replace",
             "http": {"url": f"http://localhost:{PORT}/api/v0/status"},
         },
@@ -56,6 +58,12 @@ class WorkloadService:
             self._version = self._cli.get_service_version() or ""
         return self._version
 
+    def get_service(self) -> Optional[ServiceInfo]:
+        try:
+            return self._container.get_service(WORKLOAD_SERVICE)
+        except (ModelError, ConnectionError) as e:
+            logger.error("Failed to get pebble service: %s", e)
+
     def set_version(self) -> None:
         try:
             self._unit.set_workload_version(self.version)
@@ -64,12 +72,14 @@ class WorkloadService:
 
     @property
     def is_running(self) -> bool:
-        try:
-            workload_service = self._container.get_service(WORKLOAD_CONTAINER)
-        except ModelError:
+        if not (service := self.get_service()):
             return False
 
-        return workload_service.is_running()
+        if not service.is_running():
+            return False
+
+        c = self._container.get_checks().get("ready")
+        return c.status == CheckStatus.UP
 
     def open_port(self) -> None:
         self._unit.open_port(protocol="tcp", port=PORT)

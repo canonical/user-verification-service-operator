@@ -4,6 +4,7 @@
 # Charm constants
 WORKLOAD_CONTAINER = "user-verification-service"
 WORKLOAD_SERVICE = "user-verification-service"
+PEBBLE_READY_CHECK_NAME = "ready"
 API_TOKEN_SECRET_KEY = "api-token"
 API_TOKEN_SECRET_LABEL = "apitokensecret"
 CONFIG_CONSUMER_KEY_SECRET_KEY = "consumer-key"
