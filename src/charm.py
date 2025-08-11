@@ -35,6 +35,7 @@ from constants import (
     INGRESS_INTEGRATION_NAME,
     LOGGING_INTEGRATION_NAME,
     LOGIN_UI_INTEGRATION_NAME,
+    PEBBLE_READY_CHECK_NAME,
     PORT,
     PROMETHEUS_SCRAPE_INTEGRATION_NAME,
     REGISTRATION_UI_INTEGRATION_NAME,
@@ -129,7 +130,16 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
             self, relation_name=TEMPO_TRACING_INTEGRATION_NAME, protocols=["otlp_http"]
         )
 
-        framework.observe(self.on.user_verification_service_pebble_ready, self._on_pebble_ready)
+        self.framework.observe(
+            self.on.user_verification_service_pebble_ready, self._on_pebble_ready
+        )
+        self.framework.observe(
+            self.on.user_verification_service_pebble_check_failed, self._on_pebble_check_failed
+        )
+        self.framework.observe(
+            self.on.user_verification_service_pebble_check_recovered,
+            self._on_pebble_check_recovered,
+        )
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.leader_elected, self._on_leader_elected)
@@ -227,6 +237,18 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
     def _on_ui_ready(self, event: ops.RelationEvent) -> None:
         self._holistic_handler(event)
 
+    def _on_pebble_check_failed(self, event: ops.PebbleCheckFailedEvent) -> None:
+        if event.info.name == PEBBLE_READY_CHECK_NAME:
+            logger.warning("The service is not running")
+            self.unit.status = ops.BlockedStatus(
+                f"Service is down, please check the {WORKLOAD_CONTAINER} container logs"
+            )
+
+    def _on_pebble_check_recovered(self, event: ops.PebbleCheckRecoveredEvent) -> None:
+        if event.info.name == PEBBLE_READY_CHECK_NAME:
+            logger.info("The service is online again")
+            self.unit.status = ops.ActiveStatus()
+
     def _holistic_handler(self, event: ops.EventBase) -> None:
         if not all(condition(self) for condition in NOOP_CONDITIONS):
             return
@@ -260,6 +282,12 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
     def _on_collect_status(self, event: ops.CollectStatusEvent) -> None:
         if not container_connectivity(self):
             event.add_status(ops.WaitingStatus("Container is not connected yet"))
+        elif not self._workload_service.is_running:
+            event.add_status(
+                ops.BlockedStatus(
+                    f"Failed to start the service, please check the {WORKLOAD_CONTAINER} container logs"
+                )
+            )
 
         if not login_ui_integration_exists(self):
             event.add_status(ops.BlockedStatus(f"Missing integration {LOGIN_UI_INTEGRATION_NAME}"))
