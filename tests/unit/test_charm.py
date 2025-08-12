@@ -8,7 +8,7 @@ import pytest
 from ops import StatusBase, testing
 
 from charm import UserVerificationServiceOperatorCharm
-from constants import LOGIN_UI_INTEGRATION_NAME
+from constants import LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
 
 
 class TestPebbleReadyEvent:
@@ -213,6 +213,11 @@ class TestCollectStatusEvent:
                 "login_ui_integration_exists",
                 testing.BlockedStatus,
                 f"Missing integration {LOGIN_UI_INTEGRATION_NAME}",
+            ),
+            (
+                "WorkloadService.is_running",
+                testing.BlockedStatus,
+                f"Failed to start the service, please check the {WORKLOAD_CONTAINER} container logs",
             ),
         ],
     )

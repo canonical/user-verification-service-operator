@@ -70,7 +70,6 @@ class WorkloadService:
         except Exception as e:
             logger.error("Failed to set workload version: %s", e)
 
-    @property
     def is_running(self) -> bool:
         if not (service := self.get_service()):
             return False

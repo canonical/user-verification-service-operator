@@ -282,7 +282,7 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
     def _on_collect_status(self, event: ops.CollectStatusEvent) -> None:
         if not container_connectivity(self):
             event.add_status(ops.WaitingStatus("Container is not connected yet"))
-        elif not self._workload_service.is_running:
+        elif not self._workload_service.is_running():
             event.add_status(
                 ops.BlockedStatus(
                     f"Failed to start the service, please check the {WORKLOAD_CONTAINER} container logs"
