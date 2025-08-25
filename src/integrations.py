@@ -12,7 +12,7 @@ from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
     LoginUIEndpointsRequirer,
     LoginUIProviderData,
 )
-from charms.kratos.v0.kratos_registration_web_hook import (
+from charms.kratos.v0.kratos_registration_webhook import (
     KratosRegistrationWebhookProvider,
     ProviderData,
 )
