@@ -13,7 +13,7 @@ from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
     LoginUIEndpointsProvider,
     LoginUIEndpointsRequirer,
 )
-from charms.kratos.v0.kratos_registration_web_hook import (
+from charms.kratos.v0.kratos_registration_webhook import (
     KratosRegistrationWebhookProvider,
 )
 from charms.loki_k8s.v1.loki_push_api import LogForwarder
