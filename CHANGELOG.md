@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.4](https://github.com/canonical/user-verification-service-operator/compare/v1.3.3...v1.3.4) (2025-11-12)
+
+
+### Bug Fixes
+
+* change lib name ([016b9dd](https://github.com/canonical/user-verification-service-operator/commit/016b9dd0d00e87d1c6d39b2afe07946b2eef73e8))
+* check service status before setting status ([7f7d364](https://github.com/canonical/user-verification-service-operator/commit/7f7d3640c73e82b17a908f92f34d5c6d6172cde0))
+* check service status before setting status ([530ab8c](https://github.com/canonical/user-verification-service-operator/commit/530ab8cba8db02aaf7927f2af0ff79112abc3f00))
+* don't restart service if config didn't change ([b2dc340](https://github.com/canonical/user-verification-service-operator/commit/b2dc340fb9cbcce41e9288be192d698565f5a73e))
+* update charm dependent libs ([60e5a6b](https://github.com/canonical/user-verification-service-operator/commit/60e5a6b9f676669056d480d0f9aceea32483238c))
+
 ## [1.3.3](https://github.com/canonical/user-verification-service-operator/compare/v1.3.2...v1.3.3) (2025-07-01)
 
 
