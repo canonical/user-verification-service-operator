@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.5](https://github.com/canonical/user-verification-service-operator/compare/v1.3.4...v1.3.5) (2025-12-02)
+
+
+### Bug Fixes
+
+* upgrade to use juju tf 1.0 ([0e143fb](https://github.com/canonical/user-verification-service-operator/commit/0e143fb814488a6b428724429873f9a19ce81b6f))
+
 ## [1.3.4](https://github.com/canonical/user-verification-service-operator/compare/v1.3.3...v1.3.4) (2025-11-12)
 
 
