@@ -10,7 +10,7 @@ import httpx
 import pytest
 import pytest_asyncio
 import yaml
-from pytest_operator.plugin import OpsTest
+import jubilant
 
 from constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME
 
@@ -25,15 +25,15 @@ LOGIN_UI_APP = "login-ui"
 
 async def get_unit_data(ops_test: OpsTest, unit_name: str) -> dict:
     show_unit_cmd = (f"show-unit {unit_name}").split()
-    _, stdout, _ = await ops_test.juju(*show_unit_cmd)
+    stdout = await model.juju(*show_unit_cmd)
     cmd_output = yaml.safe_load(stdout)
     return cmd_output[unit_name]
 
 
 async def get_integration_data(
-    ops_test: OpsTest, app_name: str, integration_name: str, unit_num: int = 0
+    model: jubilant.Juju, app_name: str, integration_name: str, unit_num: int = 0
 ) -> Optional[dict]:
-    data = await get_unit_data(ops_test, f"{app_name}/{unit_num}")
+    data = await get_unit_data(model, f"{app_name}/{unit_num}")
     return next(
         (
             integration
@@ -45,18 +45,19 @@ async def get_integration_data(
 
 
 async def get_app_integration_data(
-    ops_test: OpsTest,
+    model: jubilant.Juju,
     app_name: str,
     integration_name: str,
     unit_num: int = 0,
 ) -> Optional[dict]:
-    data = await get_integration_data(ops_test, app_name, integration_name, unit_num)
+    data = await get_integration_data(model, app_name, integration_name, unit_num)
     return data["application-data"] if data else None
 
 
+
 @pytest_asyncio.fixture
-async def app_integration_data(ops_test: OpsTest) -> Callable:
-    return functools.partial(get_app_integration_data, ops_test)
+async def app_integration_data(integrator_model: jubilant.Juju) -> Callable:
+    return functools.partial(get_app_integration_data, integrator_model)
 
 
 @pytest_asyncio.fixture
@@ -74,13 +75,15 @@ async def login_ui_endpoint_integration_data(app_integration_data: Callable) -> 
 
 
 @pytest_asyncio.fixture(scope="module")
-async def local_charm(ops_test: OpsTest) -> Path:
+async def local_charm() -> Path:
     # in GitHub CI, charms are built with charmcraftcache and uploaded to $CHARM_PATH
     charm = os.getenv("CHARM_PATH")
     if not charm:
-        # fall back to build locally - required when run outside of GitHub CI
-        charm = await ops_test.build_charm(".")
-    return charm
+        # Use jubilant's build_charm if available, else fallback
+        import subprocess
+        subprocess.run(["charmcraft", "pack"], check=True)
+        charm = next(Path(".").glob("*.charm"))
+    return Path(charm)
 
 
 @pytest_asyncio.fixture
