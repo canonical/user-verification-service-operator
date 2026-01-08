@@ -1,4 +1,6 @@
 pytest
 httpx
+requests
+uuid
 jubilant
 -r requirements.txt

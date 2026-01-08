@@ -4,15 +4,17 @@
 import functools
 import os
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Iterator
 
 import pytest
 import yaml
+import uuid
 import jubilant
 
-from constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME
-from integration.constants import APP_NAME
-from integration.utils import create_temp_juju_model
+from src.constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME
+from tests.integration.constants import APP_NAME
+from tests.integration.utils import create_temp_juju_model
+
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add custom command-line options for model management and deployment control.
@@ -75,10 +77,12 @@ def juju(request: pytest.FixtureRequest) -> Iterator[jubilant.Juju]:
     """Create a temporary Juju model for integration tests."""
     model_name = request.config.getoption("--model")
     if not model_name:
-        model_name = f"test-login-ui-{uuid.uuid4().hex[-8:]}"
+        model_name = f"test-user-verification-{uuid.uuid4().hex[-8:]}"
 
     yield from create_temp_juju_model(request, model=model_name)
 
+
+# TODO replace existing functions with utils.py
 
 def get_unit_data(juju: jubilant.Juju, unit_name: str) -> dict:
     show_unit_cmd = (f"show-unit {unit_name}").split()
