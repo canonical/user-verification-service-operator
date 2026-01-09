@@ -1,6 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+from contextlib import suppress
 import functools
 import os
 from pathlib import Path
@@ -13,8 +14,10 @@ import jubilant
 
 from src.constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME
 from tests.integration.constants import APP_NAME
-from tests.integration.utils import create_temp_juju_model
-
+from tests.integration.utils import (
+    get_app_integration_data,
+    juju_model_factory,
+)
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add custom command-line options for model management and deployment control.
@@ -25,6 +28,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     """
     parser.addoption(
         "--keep-models",
+        "--no-teardown",
         action="store_true",
         default=False,
         help="Keep the model after the test is finished.",
@@ -71,50 +75,34 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             )
             item.add_marker(skip_keep_models)
 
-
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def juju(request: pytest.FixtureRequest) -> Iterator[jubilant.Juju]:
-    """Create a temporary Juju model for integration tests."""
-    model_name = request.config.getoption("--model")
-    if not model_name:
+    if not (model_name := request.config.getoption("--model")):
         model_name = f"test-user-verification-{uuid.uuid4().hex[-8:]}"
 
-    yield from create_temp_juju_model(request, model=model_name)
+    juju_ = juju_model_factory(model_name)
+    juju_.wait_timeout = 10 * 60
 
+    yield juju_
 
-# TODO replace existing functions with utils.py
+    if request.session.testsfailed:
+        log = juju_.debug_log(limit=1000)
+        print(log, end="")
 
-def get_unit_data(juju: jubilant.Juju, unit_name: str) -> dict:
-    show_unit_cmd = (f"show-unit {unit_name}").split()
-    stdout = juju.juju(*show_unit_cmd)
-    cmd_output = yaml.safe_load(stdout)
-    return cmd_output[unit_name]
-
-
-def get_integration_data(
-    juju: jubilant.Juju, app_name: str, integration_name: str, unit_num: int = 0
-) -> Optional[dict]:
-    data = get_unit_data(juju, f"{app_name}/{unit_num}")
-    return next(
-        (
-            integration
-            for integration in data["relation-info"]
-            if integration["endpoint"] == integration_name
-        ),
-        None,
-    )
-
-
-def get_app_integration_data(
-    juju: jubilant.Juju,
-    app_name: str,
-    integration_name: str,
-    unit_num: int = 0,
-) -> Optional[dict]:
-    data = get_integration_data(juju, app_name, integration_name, unit_num)
-    return data["application-data"] if data else None
-
-
+    no_teardown = bool(request.config.getoption("--no-teardown"))
+    keep_model = no_teardown or request.session.testsfailed > 0
+    if not keep_model:
+        with suppress(jubilant.CLIError):
+            args = [
+                "destroy-model",
+                model_name,
+                "--no-prompt",
+                "--destroy-storage",
+                "--force",
+                "--timeout",
+                "600",
+            ]
+            juju_.cli(*args, include_model=False)
 
 @pytest.fixture
 def app_integration_data(juju: jubilant.Juju) -> Callable:

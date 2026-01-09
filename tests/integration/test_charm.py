@@ -9,7 +9,7 @@ from urllib.parse import parse_qs, urlparse
 import requests
 import jubilant
 
-from tests.integration.utils import unit_address
+from tests.integration.utils import get_unit_address as unit_address
 
 from tests.integration.constants import (
     APP_NAME,
@@ -33,19 +33,19 @@ def test_build_and_deploy(
     juju.deploy(
         local_charm,
         resources=resources,
-        application_name=APP_NAME,
+        app=APP_NAME,
         config=charm_config,
     )
     juju.deploy(
         TRAEFIK_CHARM,
-        application_name=TRAEFIK_APP,
+        app=TRAEFIK_APP,
         channel="latest/stable",
         config={"external_hostname": INGRESS_DOMAIN},
         trust=True,
     )
     juju.deploy(
         LOGIN_UI_CHARM,
-        application_name=LOGIN_UI_APP,
+        app=LOGIN_UI_APP,
         channel="latest/stable",
         trust=True,
     )

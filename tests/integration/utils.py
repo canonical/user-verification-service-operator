@@ -5,41 +5,21 @@ from contextlib import contextmanager
 from typing import Iterator, Optional
 
 import jubilant
-import pytest
 import yaml
 from tests.integration.constants import APP_NAME
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+def juju_model_factory(model_name: str) -> jubilant.Juju:
+    juju = jubilant.Juju()
+    try:
+        juju.add_model(model_name, config={"logging-config": "<root>=INFO"})
+    except jubilant.CLIError as e:
+        if "already exists" not in e.stderr:
+            raise
 
-def create_temp_juju_model(
-    request: pytest.FixtureRequest, *, model: str = ""
-) -> Iterator[jubilant.Juju]:
-    """Create a temporary Juju model."""
-    keep_models = bool(request.config.getoption("--keep-models"))
+        juju.model = model_name
 
-    # jubilant.temp_model is a context manager provided by the library
-    with jubilant.temp_model(keep=keep_models) as juju:
-        # Hack to get around `jubilant.temp_model` not accepting a custom model name
-        if model:
-            assert juju.model is not None
-            # Destroy `jubilant-*` model created by default
-            juju.destroy_model(juju.model, destroy_storage=True, force=True)
-
-            # `CLIError` will be emitted if `--model` already exists so silently ignore
-            # error and set the `model` attribute to the value of model.
-            try:
-                juju.add_model(model)
-            except jubilant.CLIError:
-                juju.model = model
-
-        juju.wait_timeout = 10 * 60
-
-        yield juju
-
-        if request.session.testsfailed:
-            log = juju.debug_log(limit=1000)
-            print(log, end="")
-
+    return juju
 
 def get_unit_data(juju: jubilant.Juju, unit_name: str) -> dict:
     """Get the data for a given unit."""
@@ -73,12 +53,16 @@ def get_app_integration_data(
     data = get_integration_data(juju, app_name, integration_name, unit_num)
     return data["application-data"] if data else None
 
+def get_unit_address(juju: jubilant.Juju, app_name: str, unit_num: int = 0) -> str:
+    """Get the address of a given unit."""
+    data = get_unit_data(juju, f"{app_name}/{unit_num}")
+    return data["address"]
 
-def unit_address(juju: jubilant.Juju, *, app_name: str, unit_num: int = 0) -> str:
-    """Get the address of a unit."""
-    status_yaml = juju.cli("status", "--format", "yaml")
-    status = yaml.safe_load(status_yaml)
-    return status["applications"][app_name]["units"][f"{app_name}/{unit_num}"]["address"]
+# def unit_address(juju: jubilant.Juju, *, app_name: str, unit_num: int = 0) -> str:
+#     """Get the address of a unit."""
+#     status_yaml = juju.cli("status", "--format", "yaml")
+#     status = yaml.safe_load(status_yaml)
+#     return status["applications"][app_name]["units"][f"{app_name}/{unit_num}"]["address"]
 
 
 def wait_for_active_idle(juju: jubilant.Juju, apps: list[str], timeout: float = 1000) -> None:
