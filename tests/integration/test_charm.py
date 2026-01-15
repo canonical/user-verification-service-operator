@@ -2,110 +2,98 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import asyncio
 import http
 import logging
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-import httpx
+import jubilant
 import pytest
-from pytest_operator.plugin import OpsTest
+import requests
 
-from tests.integration.conftest import (
+from tests.integration.constants import (
     APP_NAME,
     INGRESS_DOMAIN,
+    LOCAL_CHARM,
     LOGIN_UI_APP,
     LOGIN_UI_CHARM,
     METADATA,
     TRAEFIK_APP,
     TRAEFIK_CHARM,
 )
+from tests.integration.utils import all_active, any_error, get_unit_address
 
 logger = logging.getLogger(__name__)
 
 
-async def get_unit_address(ops_test: OpsTest, app_name: str, unit_num: int) -> str:
-    """Get private address of a unit."""
-    status = await ops_test.model.get_status()  # noqa: F821
-    return status["applications"][app_name]["units"][f"{app_name}/{unit_num}"]["address"]
-
-
-@pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest, local_charm: Path, charm_config: dict) -> None:
-    """Build the charm-under-test and deploy it together with related charms.
-
-    Assert on the unit status before any relations/configurations take place.
-    """
-    # Build and deploy charm from local source folder
+def test_build_and_deploy(
+    juju: jubilant.Juju,
+    charm_config: dict,
+) -> None:
     resources = {"oci-image": METADATA["resources"]["oci-image"]["upstream-source"]}
-    await ops_test.model.deploy(
-        local_charm,
+    charm_path = Path(LOCAL_CHARM).resolve()
+    juju.deploy(
+        charm_path,
         resources=resources,
-        application_name=APP_NAME,
+        app=APP_NAME,
         config=charm_config,
     )
-    await ops_test.model.deploy(
+    juju.deploy(
         TRAEFIK_CHARM,
-        application_name=TRAEFIK_APP,
+        app=TRAEFIK_APP,
         channel="latest/stable",
         config={"external_hostname": INGRESS_DOMAIN},
         trust=True,
     )
-    await ops_test.model.deploy(
+    juju.deploy(
         LOGIN_UI_CHARM,
-        application_name=LOGIN_UI_APP,
+        app=LOGIN_UI_APP,
         channel="latest/stable",
         trust=True,
     )
-
-    await ops_test.model.integrate(TRAEFIK_APP, APP_NAME)
-    await ops_test.model.integrate(APP_NAME, LOGIN_UI_APP)
-    await ops_test.model.integrate(TRAEFIK_APP, LOGIN_UI_APP)
-
-    # Deploy the charm and wait for active/idle status
-    await asyncio.gather(
-        ops_test.model.wait_for_idle(
-            apps=[LOGIN_UI_APP, TRAEFIK_APP],
-            raise_on_error=False,
-            raise_on_blocked=False,
-            status="active",
-            timeout=1000,
+    juju.integrate(TRAEFIK_APP, APP_NAME)
+    juju.integrate(APP_NAME, LOGIN_UI_APP)
+    juju.integrate(TRAEFIK_APP, LOGIN_UI_APP)
+    juju.wait(
+        ready=all_active(
+            LOGIN_UI_APP,
+            TRAEFIK_APP,
+            APP_NAME,
         ),
-        ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
+        error=any_error(
+            LOGIN_UI_APP,
+            TRAEFIK_APP,
+            APP_NAME,
+        ),
+        timeout=10 * 60,
     )
 
 
-async def test_app_health(ops_test: OpsTest, http_client: httpx.AsyncClient) -> None:
-    public_address = await get_unit_address(ops_test, APP_NAME, 0)
-
-    resp = await http_client.get(f"http://{public_address}:8080/api/v0/status")
-
+def test_app_health(juju: jubilant.Juju, http_client: requests.Session) -> None:
+    public_address = get_unit_address(juju, APP_NAME, 0)
+    resp = http_client.get(f"http://{public_address}:8080/api/v0/status")
     resp.raise_for_status()
 
 
-async def test_public_ingress_integration(
-    ops_test: OpsTest, http_client: httpx.AsyncClient
-) -> None:
-    address = await get_unit_address(ops_test, TRAEFIK_APP, 0)
-    url = f"https://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
-
-    resp = await http_client.get(url, follow_redirects=False)
-
+def test_public_ingress_integration(request: pytest.FixtureRequest, juju: jubilant.Juju) -> None:
+    address = get_unit_address(juju, TRAEFIK_APP, 0)
+    model_name = getattr(request.session, "juju_model_name")
+    url = f"https://{address}/{model_name}-{APP_NAME}/ui/registration_error"
+    resp = requests.get(url, allow_redirects=False, verify=False)
     assert resp.status_code == http.HTTPStatus.SEE_OTHER
 
 
-async def test_error_redirect(
-    ops_test: OpsTest,
+def test_error_redirect(
+    request: pytest.FixtureRequest,
+    juju: jubilant.Juju,
     login_ui_endpoint_integration_data: dict,
-    http_client: httpx.AsyncClient,
     support_email: str,
 ) -> None:
-    address = await get_unit_address(ops_test, TRAEFIK_APP, 0)
-    url = f"https://{address}/{ops_test.model.name}-{APP_NAME}/ui/registration_error"
+    address = get_unit_address(juju, TRAEFIK_APP, 0)
+    model_name = getattr(request.session, "juju_model_name")
 
-    resp = await http_client.get(url, follow_redirects=False)
-
+    url = f"https://{address}/{model_name}-{APP_NAME}/ui/registration_error"
+    resp = requests.get(url, allow_redirects=False, verify=False)
     assert resp.headers.get("location").startswith(
         login_ui_endpoint_integration_data["oidc_error_url"]
     )
