@@ -1,5 +1,4 @@
 pytest
-httpx
 requests
 uuid
 jubilant

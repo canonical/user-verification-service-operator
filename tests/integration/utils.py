@@ -2,14 +2,16 @@
 # See LICENSE file for licensing details.
 
 from contextlib import contextmanager
-from typing import (Iterator, Callable)
+from typing import Callable, Iterator
 
 import jubilant
 import yaml
 from tenacity import retry, stop_after_attempt, wait_exponential
+
 from tests.integration.constants import APP_NAME
 
 StatusPredicate = Callable[[jubilant.Status], bool]
+
 
 def juju_model_factory(model_name: str) -> jubilant.Juju:
     juju = jubilant.Juju()
@@ -22,6 +24,7 @@ def juju_model_factory(model_name: str) -> jubilant.Juju:
         juju.model = model_name
 
     return juju
+
 
 def get_unit_data(juju: jubilant.Juju, unit_name: str) -> dict:
     stdout = juju.cli("show-unit", unit_name)
@@ -42,9 +45,11 @@ def get_integration_data(
         None,
     )
 
+
 def get_unit_address(juju: jubilant.Juju, app_name: str, unit_num: int = 0) -> str:
     data = get_unit_data(juju, f"{app_name}/{unit_num}")
     return data["address"]
+
 
 def get_app_integration_data(
     juju: jubilant.Juju,
@@ -64,6 +69,7 @@ def get_unit_integration_data(
 ) -> dict | None:
     data = get_integration_data(juju, app_name, integration_name)
     return data["related-units"][f"{remote_app_name}/0"]["data"] if data else None
+
 
 def wait_for_active_idle(juju: jubilant.Juju, apps: list[str], timeout: float = 1000) -> None:
     """Wait for all applications and their units to be active and idle."""

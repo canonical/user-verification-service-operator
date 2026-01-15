@@ -1,14 +1,17 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-from contextlib import suppress
 import functools
 import os
+import uuid
+from collections.abc import Generator
+from contextlib import suppress
 from pathlib import Path
 from typing import Callable, Iterator
-import uuid
+
 import jubilant
 import pytest
+import requests
 
 from src.constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME
 from tests.integration.constants import APP_NAME
@@ -17,8 +20,10 @@ from tests.integration.utils import (
     juju_model_factory,
 )
 
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add custom command-line options for model management and deployment control.
+
     This function adds the following options:
         --keep-models: Keep the Juju model after the test is finished.
         --model: Specify the Juju model to run the tests on.
@@ -47,6 +52,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 def pytest_configure(config: pytest.Config) -> None:
     """Register custom markers for test selection based on deployment and model management.
+
     This function registers the following markers:
         skip_if_deployed: Skip tests if the charm is already deployed.
         skip_if_keep_models: Skip tests if the --keep-models option is set.
@@ -57,6 +63,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     """Modify collected test items based on command-line options.
+
     This function skips tests with specific markers based on the provided command-line options:
         - If --no-deploy is set, tests marked with "skip_if_deployed
           are skipped.
@@ -72,6 +79,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                 reason="skipping test because --keep-models is set"
             )
             item.add_marker(skip_keep_models)
+
 
 @pytest.fixture(scope="session")
 def juju(request: pytest.FixtureRequest) -> Iterator[jubilant.Juju]:
@@ -101,9 +109,10 @@ def juju(request: pytest.FixtureRequest) -> Iterator[jubilant.Juju]:
                 "--destroy-storage",
                 "--force",
                 "--timeout",
-                "600",
+                "600s",
             ]
             juju_.cli(*args, include_model=False)
+
 
 @pytest.fixture
 def app_integration_data(juju: jubilant.Juju) -> Callable:
@@ -131,6 +140,7 @@ def local_charm() -> Path:
     if not charm:
         # Use jubilant's build_charm if available, else fallback
         import subprocess
+
         subprocess.run(["charmcraft", "pack"], check=True)
         charm = next(Path(".").glob("*.charm"))
     return Path(charm)
@@ -147,3 +157,10 @@ def charm_config(support_email: str) -> dict:
         "support_email": support_email,
         "salesforce_enabled": False,
     }
+
+
+@pytest.fixture
+def http_client() -> Generator[requests.Session, None, None]:
+    with requests.Session() as client:
+        client.verify = False
+        yield client
