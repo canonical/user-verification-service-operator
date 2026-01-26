@@ -56,16 +56,21 @@ provider "juju" {
 
 }
 
+data "juju_model" "model" {
+  name  = var.model
+  owner = format("%s@serviceaccount", var.client_id)
+}
+
 data "juju_secret" "salesforce_consumer_secret" {
   // The secret is created when we deploy the service. The name must be the same as in
   // https://github.com/canonical/cd-identity-core-infrastructure/blob/main/modules/user_verification_service/main.tf#L3
-  name  = "user_verification_service_credentials"
-  model = var.model
+  name       = "user_verification_service_credentials"
+  model_uuid = data.juju_model.model.uuid
 }
 
 module "application" {
   source                           = "../terraform"
-  model_name                       = var.model
+  model                            = data.juju_model.model.uuid
   app_name                         = var.application_name
   units                            = var.charm.units
   base                             = var.charm.base
