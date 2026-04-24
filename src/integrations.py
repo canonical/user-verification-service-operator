@@ -128,6 +128,7 @@ class KratosRegistrationWebhookIntegration:
                 url=webhook_url,
                 body=f"base64://{WebhookBody}",
                 method="POST",
+                weight=0,
                 emit_analytics_event=False,
                 response_ignore=False,
                 response_parse=True,
