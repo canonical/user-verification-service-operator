@@ -1,6 +1,6 @@
 ops ~=3.0
 jinja2
 pydantic~=2.13.0
-cosl~=1.9.0
+cosl~=1.10.1
 lightkube~=0.22.0
 lightkube-models~=1.35.0.8
