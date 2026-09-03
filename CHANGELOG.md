@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.6](https://github.com/canonical/user-verification-service-operator/compare/v1.3.5...v1.3.6) (2026-09-03)
+
+
+### Bug Fixes
+
+* add weight to hook config ([533af34](https://github.com/canonical/user-verification-service-operator/commit/533af342d29f8fae6b7b103c95f609fb05f760d0))
+* **deps:** update dependency lightkube to v1 ([d22826d](https://github.com/canonical/user-verification-service-operator/commit/d22826d6271eab722810d2d608b5c4618fdaa251))
+* **deps:** update dependency lightkube to v1 ([#238](https://github.com/canonical/user-verification-service-operator/issues/238)) ([ecf3e2f](https://github.com/canonical/user-verification-service-operator/commit/ecf3e2fdc4e3046cc1ccd377d465a27ea9fa9045))
+* **deps:** update dependency lightkube-models to ~=1.36.3.8 ([6790b7f](https://github.com/canonical/user-verification-service-operator/commit/6790b7f68a65a263f560434d4d3b5542c6dea53b))
+* **deps:** update dependency lightkube-models to ~=1.36.3.8 ([#232](https://github.com/canonical/user-verification-service-operator/issues/232)) ([d646ac3](https://github.com/canonical/user-verification-service-operator/commit/d646ac3e1e35dfc40ab373561a3d3f78c9f08ef3))
+* **deps:** update dependency lightkube-models to ~=1.37.0.8 ([295be3f](https://github.com/canonical/user-verification-service-operator/commit/295be3f0ef58cfc85d9a671b43290829e5dc2884))
+* **deps:** update dependency lightkube-models to ~=1.37.0.8 ([#251](https://github.com/canonical/user-verification-service-operator/issues/251)) ([d51834b](https://github.com/canonical/user-verification-service-operator/commit/d51834bc50c610bc3bd25bc16b9618498d3d80a4))
+* update charm dependent libs ([b0b0d3b](https://github.com/canonical/user-verification-service-operator/commit/b0b0d3be0de21d1239662fd8b7a195b5851601b7))
+
 ## [1.3.5](https://github.com/canonical/user-verification-service-operator/compare/v1.3.4...v1.3.5) (2025-12-02)
 
 
