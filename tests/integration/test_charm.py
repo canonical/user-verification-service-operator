@@ -9,7 +9,7 @@ import jubilant
 import requests
 
 from tests.integration.constants import APP_NAME, LOCAL_CHARM, METADATA
-from tests.integration.utils import all_active, any_error, get_unit_address
+from tests.integration.utils import any_error, get_unit_address
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +26,15 @@ def test_build_and_deploy(
         app=APP_NAME,
         config=charm_config,
     )
+    # The resource limits patch restarts the pod right after the unit first goes active,
+    # so wait until it has stayed active and idle for a while.
     juju.wait(
-        ready=all_active(APP_NAME),
+        ready=lambda status: (
+            jubilant.all_active(status, APP_NAME) and jubilant.all_agents_idle(status, APP_NAME)
+        ),
         error=any_error(APP_NAME),
         timeout=10 * 60,
+        successes=10,
     )
 
 
