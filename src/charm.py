@@ -9,10 +9,6 @@ from secrets import token_hex
 
 import ops
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
-from charms.identity_platform_login_ui_operator.v0.login_ui_endpoints import (
-    LoginUIEndpointsProvider,
-    LoginUIEndpointsRequirer,
-)
 from charms.kratos.v0.kratos_registration_webhook import (
     KratosRegistrationWebhookProvider,
 )
@@ -25,31 +21,21 @@ from charms.observability_libs.v0.kubernetes_compute_resources_patch import (
 )
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
-from charms.traefik_k8s.v0.traefik_route import TraefikRouteRequirer
 
 from configs import CharmConfig
 from constants import (
     API_TOKEN_SECRET_KEY,
     API_TOKEN_SECRET_LABEL,
     GRAFANA_DASHBOARD_INTEGRATION_NAME,
-    INGRESS_INTEGRATION_NAME,
     LOGGING_INTEGRATION_NAME,
-    LOGIN_UI_INTEGRATION_NAME,
     PEBBLE_READY_CHECK_NAME,
     PORT,
     PROMETHEUS_SCRAPE_INTEGRATION_NAME,
-    REGISTRATION_UI_INTEGRATION_NAME,
     TEMPO_TRACING_INTEGRATION_NAME,
     WORKLOAD_CONTAINER,
 )
 from exceptions import PebbleError
-from integrations import (
-    IngressData,
-    KratosRegistrationWebhookIntegration,
-    LoginUIEndpointData,
-    TracingData,
-    UIEndpointIntegration,
-)
+from integrations import KratosRegistrationWebhookIntegration, TracingData
 from secret import Secrets
 from services import PebbleService, WorkloadService
 from utils import (
@@ -57,7 +43,6 @@ from utils import (
     NOOP_CONDITIONS,
     container_connectivity,
     leader_unit,
-    login_ui_integration_exists,
 )
 
 logger = logging.getLogger(__name__)
@@ -74,26 +59,9 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         self._secrets = Secrets(self.model)
         self._config = CharmConfig(self.config, self.model)
 
-        self.login_ui_requirer = LoginUIEndpointsRequirer(
-            self, relation_name=LOGIN_UI_INTEGRATION_NAME
-        )
-        self.registration_endpoints_provider = LoginUIEndpointsProvider(
-            self, relation_name=REGISTRATION_UI_INTEGRATION_NAME
-        )
-        self.registration_endpoints_integration = UIEndpointIntegration(
-            self.registration_endpoints_provider
-        )
-
         self.kratos_registration_webhook = KratosRegistrationWebhookProvider(self)
         self.kratos_webhook_integration = KratosRegistrationWebhookIntegration(
             self.kratos_registration_webhook
-        )
-
-        self.ingress = TraefikRouteRequirer(
-            self,
-            self.model.get_relation(INGRESS_INTEGRATION_NAME),
-            INGRESS_INTEGRATION_NAME,
-            raw=True,
         )
 
         self.metrics_endpoint = MetricsEndpointProvider(
@@ -148,18 +116,6 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         self.framework.observe(self.on.secret_changed, self._on_secret_changed)
 
         self.framework.observe(
-            self.on[LOGIN_UI_INTEGRATION_NAME].relation_joined, self._on_login_ui_changed
-        )
-        self.framework.observe(
-            self.on[LOGIN_UI_INTEGRATION_NAME].relation_changed, self._on_login_ui_changed
-        )
-        self.framework.observe(
-            self.on[LOGIN_UI_INTEGRATION_NAME].relation_broken, self._on_login_ui_changed
-        )
-
-        self.framework.observe(self.registration_endpoints_provider.on.ready, self._on_ui_ready)
-
-        self.framework.observe(
             self.kratos_registration_webhook.on.ready, self._on_kratos_webhook_ready
         )
 
@@ -168,18 +124,10 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
             self.resources_patch.on.patch_failed, self._on_resource_patch_failed
         )
 
-        # internal ingress
-        self.framework.observe(
-            self.ingress.on.ready,
-            self._on_internal_ingress_changed,
-        )
-
     @property
     def _pebble_layer(self) -> ops.pebble.Layer:
         return self._pebble_service.render_pebble_layer(
-            LoginUIEndpointData.load(self.login_ui_requirer),
             TracingData.load(self.tracing_requirer),
-            IngressData.load(self.ingress),
             self._secrets,
             self._config,
         )
@@ -188,20 +136,9 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
     def _webhook_url(self) -> str:
         return f"http://{self.app.name}.{self.model.name}.svc.cluster.local:{PORT}/api/v0/verify"
 
-    @property
-    def _registration_url(self) -> str:
-        return f"{IngressData.load(self.ingress).endpoint}/ui/registration_error"
-
     @leader_unit
     def _prepare_secrets(self) -> None:
         self._secrets[API_TOKEN_SECRET_LABEL] = {API_TOKEN_SECRET_KEY: token_hex(16)}
-
-    @leader_unit
-    def _on_internal_ingress_changed(self, event: ops.RelationEvent) -> None:
-        if self.ingress.is_ready():
-            ingress_config = IngressData.load(self.ingress).config
-            self.ingress.submit_to_traefik(ingress_config)
-        self._holistic_handler(event)
 
     def _on_leader_elected(self, event: ops.LeaderElectedEvent) -> None:
         self._holistic_handler(event)
@@ -218,9 +155,6 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
     def _on_secret_changed(self, event: ops.SecretChangedEvent) -> None:
         self._holistic_handler(event)
 
-    def _on_login_ui_changed(self, event: ops.RelationEvent):
-        self._holistic_handler(event)
-
     def _on_pebble_ready(self, event: ops.PebbleReadyEvent):
         self._workload_service.open_port()
         self._holistic_handler(event)
@@ -232,9 +166,6 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
         self.unit.status = ops.BlockedStatus(event.message)
 
     def _on_kratos_webhook_ready(self, event: ops.RelationEvent) -> None:
-        self._holistic_handler(event)
-
-    def _on_ui_ready(self, event: ops.RelationEvent) -> None:
         self._holistic_handler(event)
 
     def _on_pebble_check_failed(self, event: ops.PebbleCheckFailedEvent) -> None:
@@ -264,9 +195,6 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
                 self._secrets.api_token,
             )
 
-        if self.registration_endpoints_integration.is_ready():
-            self.registration_endpoints_integration.update_relation_data(self._registration_url)
-
         try:
             self._pebble_service.plan(self._pebble_layer)
         except PebbleError:
@@ -277,9 +205,6 @@ class UserVerificationServiceOperatorCharm(ops.CharmBase):
     def _on_collect_status(self, event: ops.CollectStatusEvent) -> None:
         if not (can_connect := container_connectivity(self)):
             event.add_status(ops.WaitingStatus("Container is not connected yet"))
-
-        if not login_ui_integration_exists(self):
-            event.add_status(ops.BlockedStatus(f"Missing integration {LOGIN_UI_INTEGRATION_NAME}"))
 
         if configs := self._config.get_missing_config_keys():
             event.add_status(ops.BlockedStatus(f"Missing required configuration: {configs}"))

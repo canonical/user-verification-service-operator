@@ -8,7 +8,7 @@ import pytest
 from ops import StatusBase, testing
 
 from charm import UserVerificationServiceOperatorCharm
-from constants import LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
+from constants import WORKLOAD_CONTAINER
 
 
 class TestPebbleReadyEvent:
@@ -18,7 +18,6 @@ class TestPebbleReadyEvent:
         mocked_charm_holistic_handler: MagicMock,
         mocked_workload_service_version: MagicMock,
         mocked_is_running: MagicMock,
-        login_ui_integration: testing.Relation,
         mocked_secrets: List[testing.Secret],
         charm_config: dict,
     ) -> None:
@@ -26,7 +25,6 @@ class TestPebbleReadyEvent:
         container = testing.Container("user-verification-service", can_connect=True)
         state_in = testing.State(
             containers={container},
-            relations=[login_ui_integration],
             config=charm_config,
             secrets=mocked_secrets,
         )
@@ -42,14 +40,11 @@ class TestPebbleReadyEvent:
 class TestConfigChangedEvent:
     def test_when_config_missing(
         self,
-        login_ui_integration: testing.Relation,
         mocked_secrets: List[testing.Secret],
     ) -> None:
         ctx = testing.Context(UserVerificationServiceOperatorCharm)
         container = testing.Container("user-verification-service", can_connect=True)
-        state_in = testing.State(
-            containers={container}, relations=[login_ui_integration], secrets=mocked_secrets
-        )
+        state_in = testing.State(containers={container}, secrets=mocked_secrets)
 
         state_out = ctx.run(ctx.on.config_changed(), state_in)
 
@@ -59,7 +54,6 @@ class TestConfigChangedEvent:
         self,
         mocked_charm_holistic_handler: MagicMock,
         mocked_is_running: MagicMock,
-        login_ui_integration: testing.Relation,
         mocked_secrets: List[testing.Secret],
         charm_config: dict,
     ) -> None:
@@ -67,7 +61,6 @@ class TestConfigChangedEvent:
         container = testing.Container("user-verification-service", can_connect=True)
         state_in = testing.State(
             containers={container},
-            relations=[login_ui_integration],
             config=charm_config,
             secrets=mocked_secrets,
         )
@@ -78,63 +71,14 @@ class TestConfigChangedEvent:
         mocked_charm_holistic_handler.assert_called_once()
 
 
-class TestPublicIngressReadyEvent:
-    def test_when_event_emitted(
-        self,
-        mocked_is_running: MagicMock,
-        ingress_integration: testing.Relation,
-        login_ui_integration: testing.Relation,
-        mocked_secrets: List[testing.Secret],
-        charm_config: dict,
-    ) -> None:
-        ctx = testing.Context(UserVerificationServiceOperatorCharm)
-        container = testing.Container("user-verification-service", can_connect=True)
-        state_in = testing.State(
-            containers={container},
-            relations=[ingress_integration, login_ui_integration],
-            config=charm_config,
-            secrets=mocked_secrets,
-        )
-
-        state_out = ctx.run(ctx.on.relation_joined(ingress_integration), state_in)
-
-        assert state_out.unit_status == testing.ActiveStatus()
-
-
-class TestPublicIngressRevokedEvent:
-    def test_when_event_emitted(
-        self,
-        mocked_is_running: MagicMock,
-        ingress_integration: testing.Relation,
-        login_ui_integration: testing.Relation,
-        mocked_secrets: List[testing.Secret],
-        charm_config: dict,
-    ) -> None:
-        ctx = testing.Context(UserVerificationServiceOperatorCharm)
-        container = testing.Container("user-verification-service", can_connect=True)
-        state_in = testing.State(
-            containers={container},
-            relations=[ingress_integration, login_ui_integration],
-            config=charm_config,
-            secrets=mocked_secrets,
-        )
-
-        state_out = ctx.run(ctx.on.relation_broken(ingress_integration), state_in)
-
-        assert state_out.unit_status == testing.ActiveStatus()
-
-
 class TestHolisticHandler:
     def test_when_container_not_connected(
         self,
-        login_ui_integration: testing.Relation,
         charm_config: dict,
     ) -> None:
         ctx = testing.Context(UserVerificationServiceOperatorCharm)
         container = testing.Container("user-verification-service", can_connect=False)
-        state_in = testing.State(
-            containers={container}, relations=[login_ui_integration], config=charm_config
-        )
+        state_in = testing.State(containers={container}, config=charm_config)
 
         # We abuse the config_changed event, to run the unit tests on holistic_handler.
         # Scenario does not provide us with a way to
@@ -145,8 +89,6 @@ class TestHolisticHandler:
     def test_when_all_conditions_satisfied(
         self,
         mocked_is_running: MagicMock,
-        login_ui_integration: testing.Relation,
-        ingress_integration: testing.Relation,
         mocked_secrets: List[testing.Secret],
         charm_config: dict,
         support_email: str,
@@ -158,7 +100,6 @@ class TestHolisticHandler:
         container = testing.Container("user-verification-service", can_connect=True)
         state_in = testing.State(
             containers={container},
-            relations=[login_ui_integration, ingress_integration],
             config=charm_config,
             leader=True,
             secrets=mocked_secrets,
@@ -181,14 +122,12 @@ class TestHolisticHandler:
             "TRACING_ENABLED": False,
             "LOG_LEVEL": "INFO",
             "PORT": "8080",
-            "ERROR_UI_URL": login_ui_integration.remote_app_data["oidc_error_url"],
             "SUPPORT_EMAIL": support_email,
             "API_TOKEN": api_token,
             "SALESFORCE_ENABLED": True,
             "SALESFORCE_DOMAIN": salesforce_domain,
             "SALESFORCE_CONSUMER_KEY": salesforce_consumer_info["consumer-key"],
             "SALESFORCE_CONSUMER_SECRET": salesforce_consumer_info["consumer-secret"],
-            "UI_BASE_URL": f"http://{ingress_integration.remote_app_data['external_host']}/{state_out.model.name}-user-verification-service",
         }
 
 
@@ -209,11 +148,6 @@ class TestCollectStatusEvent:
         "condition, status, message",
         [
             ("container_connectivity", testing.WaitingStatus, "Container is not connected yet"),
-            (
-                "login_ui_integration_exists",
-                testing.BlockedStatus,
-                f"Missing integration {LOGIN_UI_INTEGRATION_NAME}",
-            ),
             (
                 "WorkloadService.is_running",
                 testing.BlockedStatus,

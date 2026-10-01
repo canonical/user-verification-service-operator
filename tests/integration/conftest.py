@@ -1,24 +1,18 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import functools
 import os
 import uuid
 from collections.abc import Generator
 from contextlib import suppress
 from pathlib import Path
-from typing import Callable, Iterator
+from typing import Iterator
 
 import jubilant
 import pytest
 import requests
 
-from src.constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME
-from tests.integration.constants import APP_NAME
-from tests.integration.utils import (
-    get_app_integration_data,
-    juju_model_factory,
-)
+from tests.integration.utils import juju_model_factory
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -112,25 +106,6 @@ def juju(request: pytest.FixtureRequest) -> Iterator[jubilant.Juju]:
                 "600s",
             ]
             juju_.cli(*args, include_model=False)
-
-
-@pytest.fixture
-def app_integration_data(juju: jubilant.Juju) -> Callable:
-    return functools.partial(get_app_integration_data, juju)
-
-
-@pytest.fixture
-def leader_ingress_integration_data(app_integration_data: Callable) -> dict:
-    data = app_integration_data(APP_NAME, INGRESS_INTEGRATION_NAME)
-    assert data
-    return data
-
-
-@pytest.fixture
-def login_ui_endpoint_integration_data(app_integration_data: Callable) -> dict:
-    data = app_integration_data(APP_NAME, LOGIN_UI_INTEGRATION_NAME)
-    assert data
-    return data
 
 
 @pytest.fixture(scope="module")

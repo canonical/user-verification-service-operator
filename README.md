@@ -51,12 +51,9 @@ Now you can integrate the charm with the identity-platform:
 
 ```console
 juju integrate user-verification-service:kratos-registration-webhook kratos
-juju integrate user-verification-service:registration-endpoint-info kratos
-juju integrate user-verification-service identity-platform-login-ui
-juju integrate user-verification-service traefik-public
 ```
 
-Once the charms reach an active state, any users that try to log in to the identity-platform for the first time will be checked against the Salesforce API.
+Once the charms reach an active state, any users that try to log in to the identity-platform for the first time will be checked against the Salesforce API. Users that fail the check are shown the error page of the Identity Platform Login UI.
 
 ## Security
 

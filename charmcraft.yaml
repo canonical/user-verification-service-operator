@@ -72,15 +72,6 @@ config:
 
 
 requires:
-  ui-endpoint-info:
-    interface: login_ui_endpoints
-    limit: 1
-    optional: True
-  ingress:
-    interface: traefik_route
-    limit: 1
-    optional: False
-    description: Ingress used to expose the service to the public internet
   logging:
     interface: loki_push_api
     optional: true
@@ -96,10 +87,6 @@ provides:
     interface: kratos_registration_webhook
     optional: true
     description: Used to configure the kratos webhook that will call this service
-  registration-endpoint-info:
-    interface: login_ui_endpoints
-    limit: 1
-    optional: True
   metrics-endpoint:
     interface: prometheus_scrape
     optional: True
@@ -132,8 +119,3 @@ parts:
     build-packages:
       - "rustc-1.85"
       - "cargo-1.85"
-  templates:
-    plugin: dump
-    source: .
-    prime:
-      - templates/

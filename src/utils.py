@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
 
 from ops.charm import CharmBase
 
-from constants import INGRESS_INTEGRATION_NAME, LOGIN_UI_INTEGRATION_NAME, WORKLOAD_CONTAINER
+from constants import WORKLOAD_CONTAINER
 
 if TYPE_CHECKING:
     from charm import UserVerificationServiceOperatorCharm
@@ -31,25 +31,12 @@ def leader_unit(func: CharmEventHandler) -> CharmEventHandler:
     return wrapper  # type: ignore[return-value]
 
 
-def integration_existence(integration_name: str) -> Condition:
-    """A factory of integration existence condition."""
-
-    def wrapped(charm: CharmBase) -> bool:
-        return bool(charm.model.relations[integration_name])
-
-    return wrapped
-
-
 def container_connectivity(charm: CharmBase) -> bool:
     return charm.unit.get_container(WORKLOAD_CONTAINER).can_connect()
 
 
 def config_readiness(charm: "UserVerificationServiceOperatorCharm") -> bool:
     return not charm._config.get_missing_config_keys()
-
-
-login_ui_integration_exists = integration_existence(LOGIN_UI_INTEGRATION_NAME)
-ingress_integration_exists = integration_existence(INGRESS_INTEGRATION_NAME)
 
 
 # Condition failure causes early return without doing anything
