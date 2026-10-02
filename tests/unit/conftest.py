@@ -63,49 +63,6 @@ def mocked_event() -> MagicMock:
     return create_autospec(EventBase)
 
 
-@pytest.fixture
-def ingress_integration_data() -> dict:
-    return {
-        "external_host": "some-host",
-        "scheme": "http",
-    }
-
-
-@pytest.fixture
-def ingress_integration(ingress_integration_data: dict) -> testing.Relation:
-    return testing.Relation(
-        endpoint="ingress",
-        interface="traefik_route",
-        remote_app_name="traefik",
-        remote_app_data=ingress_integration_data,
-    )
-
-
-@pytest.fixture
-def login_ui_integration_data() -> dict:
-    return {
-        "consent_url": "http://login-ui.org/ui/consent",
-        "error_url": "http://login-ui.org/ui/error",
-        "login_url": "http://login-ui.org/ui/login",
-        "oidc_error_url": "http://login-ui.org/ui/oidc_error",
-        "device_verification_url": "http://login-ui.org/ui/device_verification",
-        "post_device_done_url": "http://login-ui.org/ui/post_device_done",
-        "recovery_url": "http://login-ui.org/ui/recovery",
-        "settings_url": "http://login-ui.org/ui/settings",
-        "webauthn_settings_url": "http://login-ui.org/ui/webauthn_settings",
-    }
-
-
-@pytest.fixture
-def login_ui_integration(login_ui_integration_data: dict) -> testing.Relation:
-    return testing.Relation(
-        endpoint="ui-endpoint-info",
-        interface="login_ui_endpoints",
-        remote_app_name="login-ui",
-        remote_app_data=login_ui_integration_data,
-    )
-
-
 @pytest.fixture()
 def api_token() -> str:
     return "secret"
@@ -170,7 +127,6 @@ def mocked_collect_status_event() -> MagicMock:
 @pytest.fixture
 def all_satisfied_conditions(mocker: MockerFixture) -> None:
     mocker.patch("charm.container_connectivity", return_value=True)
-    mocker.patch("charm.login_ui_integration_exists", return_value=True)
     mocker.patch("charm.Secrets.is_ready", return_value=True)
     mocker.patch("charm.CharmConfig.get_missing_config_keys", return_value=[])
     mocker.patch("charm.WorkloadService.is_running", return_value=True)

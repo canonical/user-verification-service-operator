@@ -13,8 +13,6 @@ DEFAULT_CONTAINER_ENV = {
     "TRACING_ENABLED": False,
     "LOG_LEVEL": "info",
     "PORT": str(PORT),
-    "UI_BASE_URL": "",
-    "ERROR_UI_URL": "",
     "SUPPORT_EMAIL": "",
     "API_TOKEN": "",
     "SALESFORCE_CONSUMER_KEY": "",
