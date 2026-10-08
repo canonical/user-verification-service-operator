@@ -11,7 +11,7 @@ license = {file = "LICENSE"}
 dependencies = [
     "ops ~=3.0",
     "jinja2",
-    "pydantic~=2.13.0",
+    "pydantic~=2.14.0",
     "cosl~=1.11.0",
     "lightkube~=1.0.0",
     "lightkube-models~=1.37.0.8",
